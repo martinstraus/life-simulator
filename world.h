@@ -1,6 +1,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include "geometry.h"
+
 struct Genome {
 
 };
@@ -27,5 +29,8 @@ struct World {
 };
 
 typedef struct World World;
+
+World* newWorld();
+void renderWorld(World* world);
 
 #endif

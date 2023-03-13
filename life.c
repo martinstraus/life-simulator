@@ -21,6 +21,7 @@ void drawQuad(Quad *q) {
 }
 
 Quad quads[QUADS_COUNT];
+World* world;
 
 void display()
 {
@@ -32,11 +33,13 @@ void display()
         Quad *q = &(quads[i]);
         drawQuad(q);
     }
+    renderWorld(world);
     glFlush();
 }
 
 int main(int argc, char **argv)
 {
+    world = newWorld();
     Point p1 = {-0.5, -0.5};
     quads[0] = makeSquare(p1, 0.1);
     Point p2 = {0.5, 0.5};
