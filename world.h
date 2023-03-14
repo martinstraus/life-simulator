@@ -3,32 +3,24 @@
 
 #include "geometry.h"
 
-struct Genome {
+typedef struct Genome {
 
-};
+} Genome;
 
-typedef struct Genome Genome;
-
-struct Organism {
+typedef struct Organism {
     PointI location;
     Genome genome;
-};
+} Organism;
 
-typedef struct Organism Organism;
-
-struct Medium {
+typedef struct Medium {
     PointI location;
-};
+} Medium;
 
-typedef struct Medium Medium;
-
-struct World {
+typedef struct World {
     SizeI size;
     Medium** locations;
     Organism* organisms;
-};
-
-typedef struct World World;
+} World;
 
 World* newWorld(SizeI size);
 void renderWorld(World* world);
