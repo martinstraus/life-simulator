@@ -10,27 +10,27 @@ struct Genome {
 typedef struct Genome Genome;
 
 struct Organism {
-    Point location;
+    PointI location;
     Genome genome;
 };
 
 typedef struct Organism Organism;
 
 struct Medium {
-    Point location;
+    PointI location;
 };
 
 typedef struct Medium Medium;
 
 struct World {
-    Size size;
-    Medium* locations;
+    SizeI size;
+    Medium** locations;
     Organism* organisms;
 };
 
 typedef struct World World;
 
-World* newWorld();
+World* newWorld(SizeI size);
 void renderWorld(World* world);
 
 #endif

@@ -8,7 +8,7 @@
 
 #define QUADS_COUNT 2
 
-Size WINDOW_SIZE = {500, 500};
+SizeF WINDOW_SIZE = {500, 500};
 
 void drawQuad(Quad *q) {
     glBegin(GL_QUADS);
@@ -37,12 +37,17 @@ void display()
     glFlush();
 }
 
+void releaseEverything() {
+    free(world);
+}
+
 int main(int argc, char **argv)
 {
-    world = newWorld();
-    Point p1 = {-0.5, -0.5};
+    SizeI worldSize = {100, 100};
+    world = newWorld(worldSize);
+    PointF p1 = {-0.5, -0.5};
     quads[0] = makeSquare(p1, 0.1);
-    Point p2 = {0.5, 0.5};
+    PointF p2 = {0.5, 0.5};
     quads[1] = makeSquare(p2, 0.1);
 
     glutInit(&argc, argv);
@@ -56,9 +61,11 @@ int main(int argc, char **argv)
     if (res != GLEW_OK)
     {
         fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
+        releaseEverything();
         return 1;
     }
 
     glutMainLoop();
+    releaseEverything();
     return 0;
 }

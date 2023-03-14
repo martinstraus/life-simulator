@@ -1,24 +1,28 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-struct Size {
+typedef struct SizeI {
     int height, width;
-};
+} SizeI;
 
-typedef struct Size Size;
+typedef struct PointI {
+    int row, column;
+} PointI;
 
-struct Point {
+typedef struct SizeF {
+    float height, width;
+} SizeF;
+
+typedef struct PointF {
     float x, y;
-};
-
-typedef struct Point Point;
+} PointF;
 
 struct Quad {
-    struct Point a, b, c, d;
+    struct PointF a, b, c, d;
 };
 
 typedef struct Quad Quad;
 
-struct Quad makeSquare(struct Point center, float size);
+struct Quad makeSquare(struct PointF center, float size);
 
 #endif

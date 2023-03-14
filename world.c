@@ -2,8 +2,15 @@
 #include <stdlib.h>
 #include "world.h"
 
-World* newWorld() {
-    return malloc(sizeof(World));
+World* newWorld(SizeI size) {
+    World* world = malloc(sizeof(World));
+    world->size = size;
+    world->locations = malloc(sizeof(Medium) * size.height * size.width);
+    for (int row = 0; row < size.height; row++) {
+        for (int column = 0; column < size.width; column++) {
+        }
+    }
+    return world;
 }
 
 void renderWorld(World* world) {
