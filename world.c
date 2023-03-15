@@ -2,17 +2,23 @@
 #include <stdlib.h>
 #include "world.h"
 
-World* newWorld(SizeI size) {
-    World* world = malloc(sizeof(World));
-    world->size = size;
-    world->locations = malloc(sizeof(Medium) * size.height * size.width);
-    for (int row = 0; row < size.height; row++) {
-        for (int column = 0; column < size.width; column++) {
+void initWorld(World *world, SizeI size) {
+    world->size.height = size.height;
+    world->size.width = size.width;
+    world->medium = (Medium **) malloc(world->size.height * (sizeof(Medium *)));
+    for (int row = 0; row < world->size.height; row++) {
+        world->medium[row] = (Medium *) malloc(world->size.width * sizeof(Medium));
+        for (int column = 0; column < world->size.width; column++) {
+            Medium *m = &(world->medium[row][column]);
+            m->location.row = row;
+            m->location.column = column;
         }
     }
-    return world;
+    
 }
 
+
+
 void renderWorld(World* world) {
-    printf("World\n");
+    printf("World [%d,%d]\n", world->size.height, world->size.width);
 }
