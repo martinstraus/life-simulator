@@ -4,52 +4,46 @@
 #include "GL/gl.h"
 #include "geometry.h"
 #include "world.h"
-
+#include "render.h"
+#include <time.h>
 
 #define QUADS_COUNT 2
 
 SizeF WINDOW_SIZE = {500, 500};
 
-void drawQuad(Quad *q) {
-    glBegin(GL_QUADS);
-    glVertex2f(q->a.x, q->a.y);
-    glVertex2f(q->b.x, q->b.y);
-    glVertex2f(q->c.x, q->c.y);
-    glVertex2f(q->d.x, q->d.y);
-    glEnd();
-
-}
-
 Quad quads[QUADS_COUNT];
 World world;
+WorldView view;
 
 void display()
 {
-    glClearColor(0.4, 0.4, 0.4, 0.4);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(1.0, 1.0, 1.0);
+    
     glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-    for (int i = 0; i < QUADS_COUNT; i++) {
-        Quad *q = &(quads[i]);
-        drawQuad(q);
+    for (int row = 0; row < world.size.height; row++) {
+        for (int column = 0; column < world.size.width; column++) {
+            Quad *shape = &(view.medium[row][column].shape);
+            drawQuad(shape);
+        }
     }
-    renderWorld(&world);
+    renderWorld(&world, &view);
     glFlush();
 }
 
 void releaseEverything() {
     free(world.medium);
+    free(view.medium);
 }
 
 int main(int argc, char **argv)
 {
-    world = (World) {};
-    initWorld(&world, (SizeI) {100, 100});
+    srand(time(NULL));
 
-    PointF p1 = {-0.5, -0.5};
-    quads[0] = makeSquare(p1, 0.1);
-    PointF p2 = {0.5, 0.5};
-    quads[1] = makeSquare(p2, 0.1);
+    world = (World) {};
+    view = (WorldView) {};
+    initWorld(&world, (SizeI) {100, 100});
+    initView(&world, &view);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE);

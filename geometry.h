@@ -17,12 +17,11 @@ typedef struct PointF {
     float x, y;
 } PointF;
 
-struct Quad {
-    struct PointF a, b, c, d;
-};
+typedef struct Quad {
+    PointF bottomLeft, topLeft, topRight, bottomRight;
+} Quad;
 
-typedef struct Quad Quad;
-
-struct Quad makeSquare(struct PointF center, float size);
+Quad makeSquareFromBottomLeft(PointF corner, SizeF size);
+Quad makeSquareFromCenter(PointF center, float size);
 
 #endif

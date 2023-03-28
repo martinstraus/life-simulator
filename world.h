@@ -12,17 +12,12 @@ typedef struct Organism {
     Genome genome;
 } Organism;
 
-typedef enum MediumType { Dirt = 0, Water = 1, Grass = 2, Rock = 3 } MediumType;
+typedef enum MediumType { DIRT = 0, WATER = 1, GRASS = 2, ROCK = 3 } MediumType;
 
 typedef struct Medium {
     PointI location;
     MediumType type;
 } Medium;
-
-typedef struct LocationsMatrix {
-    SizeI size;
-    Medium** locations;
-} LocationsMatrix;
 
 typedef struct World {
     SizeI size;
@@ -31,6 +26,17 @@ typedef struct World {
 } World;
 
 void initWorld(World * world, SizeI size);
-void renderWorld(World* world);
+
+typedef struct MediumView {
+    Quad shape;
+} MediumView;
+
+typedef struct WorldView {
+    SizeF size;
+    MediumView **medium;
+} WorldView;
+
+void initView(World *world, WorldView *view);
+void renderWorld(World *world, WorldView *view);
 
 #endif
