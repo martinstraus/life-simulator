@@ -1,66 +1,101 @@
-#include <stdio.h>
-#include <GL/glew.h>
-#include "GL/freeglut.h"
-#include "GL/gl.h"
-#include "geometry.h"
-#include "world.h"
-#include "render.h"
-#include <time.h>
+#include <GL/freeglut.h>
 
-#define QUADS_COUNT 2
+// Geometry
 
-SizeF WINDOW_SIZE = {500, 500};
+typedef struct SizeI {
+    int height, width;
+} SizeI;
 
-Quad quads[QUADS_COUNT];
-World world;
-WorldView view;
+typedef struct PointI {
+    int row, column;
+} PointI;
 
-void display()
-{
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+typedef struct SizeF {
+    float height, width;
+} SizeF;
+
+typedef struct PointF {
+    float x, y;
+} PointF;
+
+typedef struct Quad {
+    PointF bottomLeft, topLeft, topRight, bottomRight;
+} Quad;
+
+Quad makeSquareFromBottomLeft(PointF corner, SizeF size) {
+    Quad q = {
+        { corner.x, corner.y },
+        { corner.x, corner.y + size.height },
+        { corner.x + size.width, corner.y + size.height },
+        { corner.x + size.width, corner.y }
+    };
+    return q;
+}
+
+Quad makeSquareFromCenter(PointF center, float size) {
+    float half = size / (float) 2;
+    Quad q = {
+        { center.x - half, center.y + half },
+        { center.x + half, center.y + half },
+        { center.x + half, center.y - half },
+        { center.x - half, center.y - half }
+    };
+    return q;
+}
+
+// Colors
+
+typedef struct Color {
+    float r,g,b;
+} Color;
+
+Color RED = {1.0f, 0.0f, 0.0f};
+
+// Render
+
+void setColor(Color *c) {
+    glColor3f(c->r, c->g, c->b);
+}
+
+void drawQuad(Quad *q) {
+    glVertex2f(q->bottomLeft.x, q->bottomLeft.y);
+    glVertex2f(q->topLeft.x, q->topLeft.y);
+    glVertex2f(q->topRight.x, q->topRight.y);
+    glVertex2f(q->bottomRight.x, q->bottomRight.y);
+}
+
+void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-    for (int row = 0; row < world.size.height; row++) {
-        for (int column = 0; column < world.size.width; column++) {
-            Quad *shape = &(view.medium[row][column].shape);
-            drawQuad(shape);
-        }
-    }
-    renderWorld(&world, &view);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(0, 500, 0, 500, -1, 1); // Set orthographic projection with viewport size of 500
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    
+    PointF bl = {100.0f, 100.0f};
+    PointF tl = {100.0f, 400.0f};
+    PointF tr = {400.0f, 400.0f};
+    PointF br = {400.0f, 100.0f};
+    Quad q = {bl, tl, tr, br};
+
+    glBegin(GL_QUADS);
+    setColor(&RED);
+    drawQuad(&q);
+    
+    glEnd();
+    
     glFlush();
 }
 
-void releaseEverything() {
-    free(world.medium);
-    free(view.medium);
-}
-
-int main(int argc, char **argv)
-{
-    srand(time(NULL));
-
-    world = (World) {};
-    view = (WorldView) {};
-    initWorld(&world, (SizeI) {100, 100});
-    initView(&world, &view);
-
+int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE);
-    glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
-    glutInitWindowPosition(100, 100);
-    glutCreateWindow("Life");
+    glutInitWindowSize(500, 500);   // Set window size to 500x500
+    glutCreateWindow("Simple Square");
     glutDisplayFunc(display);
-
-    GLenum res = glewInit();
-    if (res != GLEW_OK)
-    {
-        fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
-        releaseEverything();
-        return 1;
-    }
-
     glutMainLoop();
-    releaseEverything();
+    
     return 0;
 }
