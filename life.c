@@ -37,12 +37,12 @@ typedef struct Quad {
     PointF bottomLeft, topLeft, topRight, bottomRight;
 } Quad;
 
-Quad makeSquareFromBottomLeft(PointF *corner, SizeF *size) {
+Quad makeSquareFromBottomLeft(PointF *corner, float size) {
     Quad q = {
         { corner->x, corner->y },
-        { corner->x, corner->y + size->height },
-        { corner->x + size->width, corner->y + size->height },
-        { corner->x + size->width, corner->y }
+        { corner->x, corner->y + size },
+        { corner->x + size, corner->y + size },
+        { corner->x + size, corner->y }
     };
     return q;
 }
@@ -82,7 +82,7 @@ SizeF WINDOW_SIZE = {500.0f, 500.0f};
 
 // World
 
-SizeF SQUARE_SIZE = {10.0f, 10.0f};
+float SQUARE_SIZE = 10.0f;
 
 Square WORLD[SQUARE_COUNT];
 
@@ -111,13 +111,13 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
 
     PointF bl = {100.0f, 100.0f};
-    Square sq = {makeSquareFromBottomLeft(&bl, &SQUARE_SIZE), &RED};
+    Square sq = {makeSquareFromBottomLeft(&bl, SQUARE_SIZE), &RED};
     WORLD[0] = sq;
     bl = (PointF){200.0f, 200.0f};
-    sq = (Square){makeSquareFromBottomLeft(&bl, &SQUARE_SIZE), &GREEN};
+    sq = (Square){makeSquareFromBottomLeft(&bl, SQUARE_SIZE), &GREEN};
     WORLD[1] = sq;
     bl = (PointF){300.0f, 300.0f};
-    sq = (Square){makeSquareFromBottomLeft(&bl, &SQUARE_SIZE), &BLUE};
+    sq = (Square){makeSquareFromBottomLeft(&bl, SQUARE_SIZE), &BLUE};
     WORLD[2] = sq;
 
     glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
