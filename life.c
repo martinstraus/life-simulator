@@ -49,7 +49,9 @@ typedef struct Color {
     float r,g,b;
 } Color;
 
-Color RED = {1.0f, 0.0f, 0.0f};
+Color RED =     {1.0f, 0.0f, 0.0f};
+Color GREEN =   {0.0f, 1.0f, 0.0f};
+Color BLUE =    {0.0f, 0.0f, 1.0f};
 
 // Render
 
@@ -82,7 +84,7 @@ void display() {
     Quad q = {bl, tl, tr, br};
 
     glBegin(GL_QUADS);
-    setColor(&RED);
+    setColor(&BLUE);
     drawQuad(&q);
     
     glEnd();
@@ -93,7 +95,7 @@ void display() {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitWindowSize(500, 500);   // Set window size to 500x500
-    glutCreateWindow("Simple Square");
+    glutCreateWindow("Life simulator");
     glutDisplayFunc(display);
     glutMainLoop();
     
