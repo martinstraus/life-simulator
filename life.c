@@ -82,10 +82,8 @@ void display() {
     glLoadIdentity();
     
     PointF bl = {100.0f, 100.0f};
-    PointF tl = {100.0f, 400.0f};
-    PointF tr = {400.0f, 400.0f};
-    PointF br = {400.0f, 100.0f};
-    Quad q = {bl, tl, tr, br};
+    SizeF s = {30.0f, 30.0f};
+    Quad q = makeSquareFromBottomLeft(bl, s);
 
     glBegin(GL_QUADS);
     setColor(&BLUE);
@@ -98,7 +96,7 @@ void display() {
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);   // Set window size to 500x500
+    glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
     glutCreateWindow("Life simulator");
     glutDisplayFunc(display);
     glutMainLoop();
