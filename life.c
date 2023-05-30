@@ -1,5 +1,19 @@
 #include <GL/freeglut.h>
 
+// Colors
+
+typedef struct Color {
+    float r,g,b;
+} Color;
+
+void setColor(Color *c) {
+    glColor3f(c->r, c->g, c->b);
+}
+
+Color RED =     {1.0f, 0.0f, 0.0f};
+Color GREEN =   {0.0f, 1.0f, 0.0f};
+Color BLUE =    {0.0f, 0.0f, 1.0f};
+
 // Geometry
 
 typedef struct SizeI {
@@ -43,32 +57,28 @@ Quad makeSquareFromCenter(PointF center, float size) {
     return q;
 }
 
-// Colors
-
-typedef struct Color {
-    float r,g,b;
-} Color;
-
-Color RED =     {1.0f, 0.0f, 0.0f};
-Color GREEN =   {0.0f, 1.0f, 0.0f};
-Color BLUE =    {0.0f, 0.0f, 1.0f};
-
-// Render
-
-void setColor(Color *c) {
-    glColor3f(c->r, c->g, c->b);
-}
-
-// Window
-
-SizeF WINDOW_SIZE = {500.0f, 500.0f};
-
 void drawQuad(Quad *q) {
     glVertex2f(q->bottomLeft.x, q->bottomLeft.y);
     glVertex2f(q->topLeft.x, q->topLeft.y);
     glVertex2f(q->topRight.x, q->topRight.y);
     glVertex2f(q->bottomRight.x, q->bottomRight.y);
 }
+
+typedef struct Square {
+    Quad quad;
+    Color *color;
+} Square;
+
+void drawSquare(Square *s) {
+    glBegin(GL_QUADS);
+    setColor(s->color);
+    drawQuad(&(s->quad));
+}
+
+// Window
+
+SizeF WINDOW_SIZE = {500.0f, 500.0f};
+
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -82,15 +92,14 @@ void display() {
     glLoadIdentity();
     
     PointF bl = {100.0f, 100.0f};
-    SizeF s = {30.0f, 30.0f};
+    SizeF s = {300.0f, 30.0f};
     Quad q = makeSquareFromBottomLeft(bl, s);
+    Square sq = {q, &BLUE};
 
     glBegin(GL_QUADS);
-    setColor(&BLUE);
-    drawQuad(&q);
+    drawSquare(&sq);
     
     glEnd();
-    
     glFlush();
 }
 
