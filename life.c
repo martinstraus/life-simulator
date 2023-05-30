@@ -59,6 +59,10 @@ void setColor(Color *c) {
     glColor3f(c->r, c->g, c->b);
 }
 
+// Window
+
+SizeF WINDOW_SIZE = {500.0f, 500.0f};
+
 void drawQuad(Quad *q) {
     glVertex2f(q->bottomLeft.x, q->bottomLeft.y);
     glVertex2f(q->topLeft.x, q->topLeft.y);
@@ -72,7 +76,7 @@ void display() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glOrtho(0, 500, 0, 500, -1, 1); // Set orthographic projection with viewport size of 500
+    glOrtho(0, WINDOW_SIZE.width, 0, WINDOW_SIZE.height, -1, 1); // Set orthographic projection with viewport size of 500
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -94,7 +98,7 @@ void display() {
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitWindowSize(500, 500);   // Set window size to 500x500
+    glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);   // Set window size to 500x500
     glutCreateWindow("Life simulator");
     glutDisplayFunc(display);
     glutMainLoop();
