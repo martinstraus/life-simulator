@@ -132,6 +132,8 @@ int randomColor() {
 }
 
 void initWorld() {
+    // Seed the random number generator
+    srand(time(NULL));
 
     WORLD = (World){
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
@@ -154,17 +156,20 @@ void initWorld() {
     
 }
 
-int main(int argc, char** argv) {
-    // Seed the random number generator
-    srand(time(NULL));
-
-    initWorld();
-    
+void initGraphics(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
     glutCreateWindow("Life simulator");
     glutDisplayFunc(display);
+}
+
+void run() {
     glutMainLoop();
-    
+}
+
+int main(int argc, char** argv) {
+    initWorld();
+    initGraphics(argc, argv);
+    run();
     return 0;
 }
