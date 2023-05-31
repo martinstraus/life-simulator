@@ -5,7 +5,7 @@
 
 #define PALLETE_SIZE 3
 
-#define SCREEN_WIDTH 500
+#define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 500
 
 #define SQUARE_SIZE 10
@@ -91,11 +91,16 @@ void drawSquare(Square *s) {
 
 // Window
 
-SizeF WINDOW_SIZE = {500.0f, 500.0f};
+SizeF WINDOW_SIZE = {SCREEN_HEIGHT, SCREEN_WIDTH};
 
 // World
 
-Square WORLD[WORLD_WIDTH][WORLD_HEIGHT]; // Coordinate (0,0) is at bottom left.
+typedef struct World {
+    SizeI size;
+    Square **squares; // First dimension = rows; second dimension = columns.
+} World;
+
+World WORLD;
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -109,9 +114,9 @@ void display() {
     glLoadIdentity();
 
     glBegin(GL_QUADS);
-    for (int x = 0; x < WORLD_WIDTH; x++) {
-        for (int y = 0; y < WORLD_HEIGHT; y++)
-        drawSquare(&(WORLD[x][y]));
+    for (int r = 0; r < WORLD_HEIGHT; r++) {
+        for (int c = 0; c < WORLD_WIDTH; c++)
+        drawSquare(&(WORLD.squares[r][c]));
     }
     
     glEnd();
@@ -126,19 +131,36 @@ int randomColor() {
     return randomInt(0, PALLETE_SIZE-1);
 }
 
+void initWorld() {
+
+    WORLD = (World){
+        (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
+        (Square **)malloc( WORLD_HEIGHT * sizeof(Square *))
+    };
+
+    // Initialization of squares matrix.
+    for (int r = 0; r < WORLD_HEIGHT; r++) {
+        WORLD.squares[r] = (Square *) malloc(WORLD_WIDTH * sizeof(Square));
+
+        // Initialization of the row of squares
+        for(int c = 0; c < WORLD_WIDTH; c++) {
+            PointF bl = {c * SQUARE_SIZE, r * SQUARE_SIZE};
+            WORLD.squares[r][c] = (Square){
+                makeSquareFromBottomLeft(&bl, SQUARE_SIZE), 
+                &(PALLETE[randomColor()])
+            };
+        }
+    }
+    
+}
+
 int main(int argc, char** argv) {
     // Seed the random number generator
     srand(time(NULL));
 
-    glutInit(&argc, argv);
+    initWorld();
     
-    for (int x = 0; x < WORLD_WIDTH; x++) {
-        for (int y = 0; y < WORLD_HEIGHT; y++) {
-            PointF bl = {x * SQUARE_SIZE, y * SQUARE_SIZE};
-            WORLD[x][y] = (Square){makeSquareFromBottomLeft(&bl, SQUARE_SIZE), &(PALLETE[randomColor()])};
-        }
-    }
-
+    glutInit(&argc, argv);
     glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
     glutCreateWindow("Life simulator");
     glutDisplayFunc(display);
