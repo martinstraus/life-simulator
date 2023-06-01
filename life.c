@@ -3,7 +3,7 @@
 #include <time.h>
 #include <GL/freeglut.h>
 
-#define PALLETE_SIZE 3
+#define PALLETE_SIZE 4
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 500
@@ -25,8 +25,9 @@ void setColor(Color *c) {
 const Color RED =     {255, 153, 153};
 const Color GREEN =   {153, 255, 153};
 const Color BLUE =    {153, 204, 255};
+const Color BROWN =   {176, 152, 126};
 
-Color PALLETE[PALLETE_SIZE] = {RED, GREEN, BLUE};
+Color PALLETE[PALLETE_SIZE] = {RED, GREEN, BLUE, BROWN};
 
 // Geometry
 
@@ -95,9 +96,26 @@ SizeF WINDOW_SIZE = {SCREEN_HEIGHT, SCREEN_WIDTH};
 
 // World
 
+// The medium where the cells might be living. It might be the floor, air, water...
+typedef struct MediumType {
+    Color *color;
+} MediumType;
+
+const MediumType DIRT = {&BROWN};
+const MediumType GRASS = {&GREEN};
+const MediumType WATER = {&BLUE};
+const MediumType LAVA = {&RED};
+
+const MediumType MEDIA[] = {DIRT, GRASS, WATER, LAVA};
+
+typedef struct Medium {
+    MediumType *type;
+    Square shape;
+} Medium;
+
 typedef struct World {
     SizeI size;
-    Square **squares; // First dimension = rows; second dimension = columns.
+    Medium **floor; // First dimension = rows; second dimension = columns.
 } World;
 
 World WORLD;
@@ -116,7 +134,7 @@ void display() {
     glBegin(GL_QUADS);
     for (int r = 0; r < WORLD_HEIGHT; r++) {
         for (int c = 0; c < WORLD_WIDTH; c++)
-        drawSquare(&(WORLD.squares[r][c]));
+        drawSquare(&(WORLD.floor[r][c].shape));
     }
     
     glEnd();
@@ -131,25 +149,37 @@ int randomColor() {
     return randomInt(0, PALLETE_SIZE-1);
 }
 
+MediumType * randomMediumType() {
+    int rand = randomInt(0, 100);
+    if (rand < 80) return &GRASS;
+    if (rand < 85) return &DIRT;
+    if (rand < 99) return &WATER;
+    return &LAVA;
+}
+
 void initWorld() {
     // Seed the random number generator
     srand(time(NULL));
 
     WORLD = (World){
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
-        (Square **)malloc( WORLD_HEIGHT * sizeof(Square *))
+        (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *))
     };
 
-    // Initialization of squares matrix.
+    // Initialization of medium matrix.
     for (int r = 0; r < WORLD_HEIGHT; r++) {
-        WORLD.squares[r] = (Square *) malloc(WORLD_WIDTH * sizeof(Square));
+        WORLD.floor[r] = (Medium *) malloc(WORLD_WIDTH * sizeof(Medium));
 
         // Initialization of the row of squares
         for(int c = 0; c < WORLD_WIDTH; c++) {
             PointF bl = {c * SQUARE_SIZE, r * SQUARE_SIZE};
-            WORLD.squares[r][c] = (Square){
-                makeSquareFromBottomLeft(&bl, SQUARE_SIZE), 
-                &(PALLETE[randomColor()])
+            MediumType *mediumType = randomMediumType();
+            WORLD.floor[r][c] = (Medium){
+                mediumType,
+                (Square) {
+                    makeSquareFromBottomLeft(&bl, SQUARE_SIZE),
+                    mediumType->color
+                }
             };
         }
     }
