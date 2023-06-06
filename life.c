@@ -121,6 +121,8 @@ typedef struct ADN {
     uint64_t value;
 } ADN;
 
+const uint64_t ADN_COLOR = 0x3;
+
 typedef struct Creature {
     PointI location;
     ADN adn;
@@ -194,7 +196,7 @@ PointI randomLocation() {
 }
 
 ADN randomADN() {
-    return (ADN){random_uint64};
+    return (ADN){random_uint64()};
 };
 
 void initWorld() {
@@ -235,13 +237,15 @@ void initWorld() {
             (float) (location.row * SQUARE_SIZE), 
             (float) (location.column * SQUARE_SIZE)
         };
+        ADN adn = randomADN();
+        int colorIndex =(int) (adn.value & ADN_COLOR);
         WORLD.creatures[i] = (Creature){
             location,
-            randomADN(),
+            adn,
             0l,
             (Square) {
                 makeSquareFromBottomLeft(&bl, SQUARE_SIZE),
-                &BLUE
+                &PALLETE[colorIndex+1]
             }
         };
     }
