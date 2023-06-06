@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdint.h>
 #include <GL/freeglut.h>
 
-#define PALLETE_SIZE 4
+#define PALLETE_SIZE 5
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 500
@@ -22,12 +23,13 @@ void setColor(Color *c) {
     glColor3ub(c->r, c->g, c->b);
 }
 
+const Color BLACK =   {0, 0, 0};
 const Color RED =     {255, 153, 153};
 const Color GREEN =   {153, 255, 153};
 const Color BLUE =    {153, 204, 255};
 const Color BROWN =   {176, 152, 126};
 
-Color PALLETE[PALLETE_SIZE] = {RED, GREEN, BLUE, BROWN};
+Color PALLETE[PALLETE_SIZE] = {BLACK, RED, GREEN, BLUE, BROWN};
 
 // Geometry
 
@@ -101,21 +103,36 @@ typedef struct MediumType {
     Color *color;
 } MediumType;
 
+const MediumType NOTHING = {&BLACK};
 const MediumType DIRT = {&BROWN};
 const MediumType GRASS = {&GREEN};
 const MediumType WATER = {&BLUE};
 const MediumType LAVA = {&RED};
 
-const MediumType MEDIA[] = {DIRT, GRASS, WATER, LAVA};
+const MediumType MEDIA[] = {NOTHING, DIRT, GRASS, WATER, LAVA};
 
 typedef struct Medium {
     MediumType *type;
     Square shape;
 } Medium;
 
+// ADN defines a set of characteristics that influence the cell's behaviuor.
+typedef struct ADN {
+    uint64_t value;
+} ADN;
+
+typedef struct Creature {
+    PointI location;
+    ADN adn;
+    long generation;
+    Square shape;
+} Creature;
+
 typedef struct World {
     SizeI size;
     Medium **floor; // First dimension = rows; second dimension = columns.
+    int creaturesSize;
+    Creature *creatures;
 } World;
 
 World WORLD;
@@ -132,9 +149,15 @@ void display() {
     glLoadIdentity();
 
     glBegin(GL_QUADS);
+
     for (int r = 0; r < WORLD_HEIGHT; r++) {
-        for (int c = 0; c < WORLD_WIDTH; c++)
+        for (int c = 0; c < WORLD_WIDTH; c++) {
         drawSquare(&(WORLD.floor[r][c].shape));
+    }
+    }
+
+    for (int i = 0; i < WORLD.creaturesSize; i++) {
+        drawSquare(&(WORLD.creatures[i].shape));
     }
     
     glEnd();
@@ -144,6 +167,12 @@ void display() {
 int randomInt(int min, int max) {
     return min + rand() % (max - min + 1);
 }
+
+uint64_t random_uint64() {
+    uint64_t random_value = ((uint64_t)rand() << 32) | rand();
+    return random_value;
+}
+
 
 int randomColor() {
     return randomInt(0, PALLETE_SIZE-1);
@@ -157,13 +186,28 @@ MediumType * randomMediumType() {
     return &LAVA;
 }
 
+PointI randomLocation() {
+    return (PointI) {
+        randomInt(0, WORLD_HEIGHT),
+        randomInt(0, WORLD_WIDTH)
+    };
+}
+
+ADN randomADN() {
+    return (ADN){random_uint64};
+};
+
 void initWorld() {
     // Seed the random number generator
     srand(time(NULL));
 
+    int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * 0.05;
+
     WORLD = (World){
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
-        (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *))
+        (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *)),
+        creaturesSize,
+        (Creature *)malloc( creaturesSize * sizeof(Creature))
     };
 
     // Initialization of medium matrix.
@@ -173,7 +217,7 @@ void initWorld() {
         // Initialization of the row of squares
         for(int c = 0; c < WORLD_WIDTH; c++) {
             PointF bl = {c * SQUARE_SIZE, r * SQUARE_SIZE};
-            MediumType *mediumType = randomMediumType();
+            MediumType *mediumType = &NOTHING;
             WORLD.floor[r][c] = (Medium){
                 mediumType,
                 (Square) {
@@ -184,6 +228,23 @@ void initWorld() {
         }
     }
     
+    // Initialization of creatures
+    for (int i = 0; i < WORLD.creaturesSize; i++) {
+        PointI location = randomLocation();
+        PointF bl = {
+            (float) (location.row * SQUARE_SIZE), 
+            (float) (location.column * SQUARE_SIZE)
+        };
+        WORLD.creatures[i] = (Creature){
+            location,
+            randomADN(),
+            0l,
+            (Square) {
+                makeSquareFromBottomLeft(&bl, SQUARE_SIZE),
+                &BLUE
+            }
+        };
+    }
 }
 
 void initGraphics(int argc, char** argv) {
