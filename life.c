@@ -126,7 +126,8 @@ const uint64_t ADN_COLOR = 0x3;
 typedef struct Creature {
     PointI location;
     ADN adn;
-    long generation;
+    long generation;    // Generation is increased every time a creature is born out of reproduction
+    long birth;         // When this creature was born, in ticks.
     Square shape;
 } Creature;
 
@@ -174,7 +175,6 @@ uint64_t random_uint64() {
     uint64_t random_value = ((uint64_t)rand() << 32) | rand();
     return random_value;
 }
-
 
 int randomColor() {
     return randomInt(0, PALLETE_SIZE-1);
@@ -243,6 +243,7 @@ void initWorld() {
             location,
             adn,
             0l,
+            0,
             (Square) {
                 makeSquareFromBottomLeft(&bl, SQUARE_SIZE),
                 &PALLETE[colorIndex+1]
