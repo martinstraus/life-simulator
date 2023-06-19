@@ -13,6 +13,9 @@
 #define SQUARE_SIZE 10
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
 #define WORLD_HEIGHT SCREEN_WIDTH/SQUARE_SIZE
+#define WORLD_SPEED 1
+
+#define CREATURE_INITIAL_ENERY 1000
 
 // General purpose functions
 
@@ -155,6 +158,7 @@ typedef struct Creature {
     long generation;    // Generation is increased every time a creature is born out of reproduction
     long birth;         // When this creature was born, in ticks.
     Square shape;
+    long energy;        // Some actions have an energy cost.
 } Creature;
 
 typedef struct Population {
@@ -243,7 +247,7 @@ void initWorld() {
             creaturesSize,
             (Creature *)malloc( creaturesSize * sizeof(Creature))
         },
-        (WorldTime){100,0}
+        (WorldTime){WORLD_SPEED,0}
     };
 
     // Initialization of medium matrix.
@@ -277,7 +281,8 @@ void initWorld() {
             (Square) {
                 quadForLocation(location.row, location.column),
                 &PALLETE[colorIndex+1]
-            }
+            },
+            CREATURE_INITIAL_ENERY,
         };
     }
 }
@@ -312,14 +317,17 @@ void updateWorld() {
 
     // Update the creatures to new locations
     for (int i = 0; i < WORLD.population.size; i++) {
-        PointI np = positionAfterRandomMovement(WORLD.population.creatures[i].location);
-        /* while (buffer[np.row][np.column] != NULL) {
-            np = positionAfterRandomMovement(c.location);
-        }*/
-        buffer[np.row][np.column] = &(WORLD.population.creatures[i]);
-        WORLD.population.creatures[i].location.row = np.row;
-        WORLD.population.creatures[i].location.column = np.column;
-        WORLD.population.creatures[i].shape.quad = quadForLocation(np.row, np.column);
+        if (randomInt(0,1) == 1 && WORLD.population.creatures[i].energy > 0) {
+            PointI np = positionAfterRandomMovement(WORLD.population.creatures[i].location);
+            /* while (buffer[np.row][np.column] != NULL) {
+                np = positionAfterRandomMovement(c.location);
+            }*/
+            buffer[np.row][np.column] = &(WORLD.population.creatures[i]);
+            WORLD.population.creatures[i].location.row = np.row;
+            WORLD.population.creatures[i].location.column = np.column;
+            WORLD.population.creatures[i].shape.quad = quadForLocation(np.row, np.column);
+            WORLD.population.creatures[i].energy--;
+        }
     }
 
     // Free the buffer
