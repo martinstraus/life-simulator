@@ -131,11 +131,17 @@ typedef struct Creature {
     Square shape;
 } Creature;
 
+typedef struct WorldTime {
+    long speed;    // Time between ticks, in milliseconds.
+    long current;  // Current tick; no relation to actual time.
+} WorldTime;
+
 typedef struct World {
     SizeI size;
     Medium **floor; // First dimension = rows; second dimension = columns.
     int creaturesSize;
     Creature *creatures;
+    WorldTime time;
 } World;
 
 World WORLD;
@@ -209,7 +215,8 @@ void initWorld() {
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
         (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *)),
         creaturesSize,
-        (Creature *)malloc( creaturesSize * sizeof(Creature))
+        (Creature *)malloc( creaturesSize * sizeof(Creature)),
+        (WorldTime){500,0}
     };
 
     // Initialization of medium matrix.
@@ -252,10 +259,18 @@ void initWorld() {
     }
 }
 
+void tick() {
+    WORLD.time.current++;
+    printf("Current tick: %ld\n", WORLD.time.current);
+    glutTimerFunc(WORLD.time.speed, tick, 0);
+}
+
 void initGraphics(int argc, char** argv) {
     glutInit(&argc, argv);
+    //glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
     glutCreateWindow("Life simulator");
+    glutTimerFunc(WORLD.time.speed, tick, 0);
     glutDisplayFunc(display);
 }
 
