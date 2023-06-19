@@ -46,7 +46,7 @@ typedef struct SizeF {
 } SizeF;
 
 typedef struct PointF {
-    float x, y;
+    float y, x;
 } PointF;
 
 typedef struct Quad {
@@ -165,8 +165,8 @@ void display() {
 
     for (int r = 0; r < WORLD_HEIGHT; r++) {
         for (int c = 0; c < WORLD_WIDTH; c++) {
-        drawSquare(&(WORLD.floor[r][c].shape));
-    }
+            drawSquare(&(WORLD.floor[r][c].shape));
+        }
     }
 
     for (int i = 0; i < WORLD.population.size; i++) {
@@ -175,6 +175,7 @@ void display() {
     
     glEnd();
     glFlush();
+    glutSwapBuffers();
 }
 
 int randomInt(int min, int max) {
@@ -209,10 +210,16 @@ ADN randomADN() {
     return (ADN){random_uint64()};
 };
 
+Quad quadForLocation(int row, int column) {
+    PointF bl = {row * SQUARE_SIZE, column * SQUARE_SIZE};
+    return makeSquareFromBottomLeft(&bl, SQUARE_SIZE);
+}
+
 void initWorld() {
     // Seed the random number generator
     srand(time(NULL));
 
+    //int creaturesSize = 1;
     int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * 0.05;
 
     WORLD = (World){
@@ -222,7 +229,7 @@ void initWorld() {
             creaturesSize,
             (Creature *)malloc( creaturesSize * sizeof(Creature))
         },
-        (WorldTime){500,0}
+        (WorldTime){100,0}
     };
 
     // Initialization of medium matrix.
@@ -236,7 +243,7 @@ void initWorld() {
             WORLD.floor[r][c] = (Medium){
                 mediumType,
                 (Square) {
-                    makeSquareFromBottomLeft(&bl, SQUARE_SIZE),
+                    quadForLocation(r, c),
                     mediumType->color
                 }
             };
@@ -246,10 +253,6 @@ void initWorld() {
     // Initialization of creatures
     for (int i = 0; i < WORLD.population.size; i++) {
         PointI location = randomLocation();
-        PointF bl = {
-            (float) (location.row * SQUARE_SIZE), 
-            (float) (location.column * SQUARE_SIZE)
-        };
         ADN adn = randomADN();
         int colorIndex =(int) (adn.value & ADN_COLOR);
         WORLD.population.creatures[i] = (Creature){
@@ -258,27 +261,78 @@ void initWorld() {
             0l,
             0,
             (Square) {
-                makeSquareFromBottomLeft(&bl, SQUARE_SIZE),
+                quadForLocation(location.row, location.column),
                 &PALLETE[colorIndex+1]
             }
         };
     }
 }
 
+PointI positionAfterRandomMovement(PointI current) {
+    PointI rp = {randomInt(0,2)-1, randomInt(0,2)-1};               // Random movement.
+    PointI np = {rp.row + current.row, rp.column + current.column}; // New location
+    if (np.column < 0) {
+        np.column = 0;
+    }
+    else if (np.column >= WORLD.size.width) {
+        np.column = WORLD.size.width-1;
+    }
+    if (np.row < 0) {
+        np.row = 0;
+    }
+    else if (np.row >= WORLD.size.height) {
+        np.row = WORLD.size.height-1;
+    }
+    return np;
+}
+
 void updateWorld() {
-    
+    // Create a buffer of creature locations
+    Creature ***buffer = malloc(sizeof(Creature **) * WORLD.size.height);
+    for (int r = 0; r < WORLD.size.height; r++) {
+        buffer[r] = malloc(sizeof(Creature *) * WORLD.size.height);
+        for (int c = 0; c < WORLD.size.width; c++) {
+            buffer[r][c] == NULL;
+        }
+    }
+
+    // Update the creatures to new locations
+    for (int i = 0; i < WORLD.population.size; i++) {
+        PointI np = positionAfterRandomMovement(WORLD.population.creatures[i].location);
+       /* while (buffer[np.row][np.column] != NULL) {
+            np = positionAfterRandomMovement(c.location);
+        }*/
+        buffer[np.row][np.column] = &(WORLD.population.creatures[i]);
+        printf(
+            "[%1d,%2d] -> [%3d,%4d]\n", 
+            WORLD.population.creatures[i].location.row,
+            WORLD.population.creatures[i].location.column,
+            np.row,
+            np.column
+        );
+        WORLD.population.creatures[i].location.row = np.row;
+        WORLD.population.creatures[i].location.column = np.column;
+        WORLD.population.creatures[i].shape.quad = quadForLocation(np.row, np.column);
+    }
+
+    // Free the buffer
+    for (int r = 0; r < WORLD.size.height; r++) {
+        free(buffer[r]);
+    }
+    free(buffer);
 }
 
 void tick() {
     WORLD.time.current++;
     printf("Current tick: %ld\n", WORLD.time.current);
     updateWorld();
+    glutPostRedisplay();
     glutTimerFunc(WORLD.time.speed, tick, 0);
 }
 
 void initGraphics(int argc, char** argv) {
     glutInit(&argc, argv);
-    //glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(WINDOW_SIZE.width, WINDOW_SIZE.height);
     glutCreateWindow("Life simulator");
     glutTimerFunc(WORLD.time.speed, tick, 0);
