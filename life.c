@@ -13,6 +13,17 @@
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
 #define WORLD_HEIGHT SCREEN_WIDTH/SQUARE_SIZE
 
+// General purpose functions
+
+int randomInt(int min, int max) {
+    return min + rand() % (max - min + 1);
+}
+
+uint64_t random_uint64() {
+    uint64_t random_value = ((uint64_t)rand() << 32) | rand();
+    return random_value;
+}
+
 // Colors
 
 typedef struct Color {
@@ -30,6 +41,10 @@ const Color BLUE =    {153, 204, 255};
 const Color BROWN =   {176, 152, 126};
 
 Color PALLETE[PALLETE_SIZE] = {BLACK, RED, GREEN, BLUE, BROWN};
+
+int randomColor() {
+    return randomInt(0, PALLETE_SIZE-1);
+}
 
 // Geometry
 
@@ -72,6 +87,11 @@ Quad makeSquareFromCenter(PointF *center, float size) {
         { center->x - half, center->y - half }
     };
     return q;
+}
+
+Quad quadForLocation(int row, int column) {
+    PointF bl = {row * SQUARE_SIZE, column * SQUARE_SIZE};
+    return makeSquareFromBottomLeft(&bl, SQUARE_SIZE);
 }
 
 void drawQuad(Quad *q) {
@@ -178,18 +198,7 @@ void display() {
     glutSwapBuffers();
 }
 
-int randomInt(int min, int max) {
-    return min + rand() % (max - min + 1);
-}
 
-uint64_t random_uint64() {
-    uint64_t random_value = ((uint64_t)rand() << 32) | rand();
-    return random_value;
-}
-
-int randomColor() {
-    return randomInt(0, PALLETE_SIZE-1);
-}
 
 MediumType * randomMediumType() {
     int rand = randomInt(0, 100);
@@ -210,17 +219,12 @@ ADN randomADN() {
     return (ADN){random_uint64()};
 };
 
-Quad quadForLocation(int row, int column) {
-    PointF bl = {row * SQUARE_SIZE, column * SQUARE_SIZE};
-    return makeSquareFromBottomLeft(&bl, SQUARE_SIZE);
-}
-
 void initWorld() {
     // Seed the random number generator
     srand(time(NULL));
 
     //int creaturesSize = 1;
-    int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * 0.05;
+    int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * 0.01;
 
     WORLD = (World){
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
