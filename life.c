@@ -131,6 +131,11 @@ typedef struct Creature {
     Square shape;
 } Creature;
 
+typedef struct Population {
+    int size;
+    Creature *creatures;
+} Population;
+
 typedef struct WorldTime {
     long speed;    // Time between ticks, in milliseconds.
     long current;  // Current tick; no relation to actual time.
@@ -139,8 +144,7 @@ typedef struct WorldTime {
 typedef struct World {
     SizeI size;
     Medium **floor; // First dimension = rows; second dimension = columns.
-    int creaturesSize;
-    Creature *creatures;
+    Population population;
     WorldTime time;
 } World;
 
@@ -165,8 +169,8 @@ void display() {
     }
     }
 
-    for (int i = 0; i < WORLD.creaturesSize; i++) {
-        drawSquare(&(WORLD.creatures[i].shape));
+    for (int i = 0; i < WORLD.population.size; i++) {
+        drawSquare(&(WORLD.population.creatures[i].shape));
     }
     
     glEnd();
@@ -214,8 +218,10 @@ void initWorld() {
     WORLD = (World){
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
         (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *)),
-        creaturesSize,
-        (Creature *)malloc( creaturesSize * sizeof(Creature)),
+        (Population){
+            creaturesSize,
+            (Creature *)malloc( creaturesSize * sizeof(Creature))
+        },
         (WorldTime){500,0}
     };
 
@@ -238,7 +244,7 @@ void initWorld() {
     }
     
     // Initialization of creatures
-    for (int i = 0; i < WORLD.creaturesSize; i++) {
+    for (int i = 0; i < WORLD.population.size; i++) {
         PointI location = randomLocation();
         PointF bl = {
             (float) (location.row * SQUARE_SIZE), 
@@ -246,7 +252,7 @@ void initWorld() {
         };
         ADN adn = randomADN();
         int colorIndex =(int) (adn.value & ADN_COLOR);
-        WORLD.creatures[i] = (Creature){
+        WORLD.population.creatures[i] = (Creature){
             location,
             adn,
             0l,
@@ -259,9 +265,14 @@ void initWorld() {
     }
 }
 
+void updateWorld() {
+    
+}
+
 void tick() {
     WORLD.time.current++;
     printf("Current tick: %ld\n", WORLD.time.current);
+    updateWorld();
     glutTimerFunc(WORLD.time.speed, tick, 0);
 }
 
