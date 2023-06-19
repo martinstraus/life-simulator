@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -22,6 +23,11 @@ int randomInt(int min, int max) {
 uint64_t random_uint64() {
     uint64_t random_value = ((uint64_t)rand() << 32) | rand();
     return random_value;
+}
+
+// Should return 0 when x = 0, and approach 1 for greater values.
+double sigmoid(double x) {
+    return 1.0 / (1.0 + exp(-x)) - 0.5;
 }
 
 // Colors
@@ -198,8 +204,6 @@ void display() {
     glutSwapBuffers();
 }
 
-
-
 MediumType * randomMediumType() {
     int rand = randomInt(0, 100);
     if (rand < 80) return &GRASS;
@@ -218,6 +222,12 @@ PointI randomLocation() {
 ADN randomADN() {
     return (ADN){random_uint64()};
 };
+
+int creatureShouldDie(Creature *c) {
+    long age = WORLD.time.current - c->birth;
+    double s = sigmoid(age);
+    return s > 0.95 ? 1 : 0;
+}
 
 void initWorld() {
     // Seed the random number generator
@@ -303,17 +313,10 @@ void updateWorld() {
     // Update the creatures to new locations
     for (int i = 0; i < WORLD.population.size; i++) {
         PointI np = positionAfterRandomMovement(WORLD.population.creatures[i].location);
-       /* while (buffer[np.row][np.column] != NULL) {
+        /* while (buffer[np.row][np.column] != NULL) {
             np = positionAfterRandomMovement(c.location);
         }*/
         buffer[np.row][np.column] = &(WORLD.population.creatures[i]);
-        printf(
-            "[%1d,%2d] -> [%3d,%4d]\n", 
-            WORLD.population.creatures[i].location.row,
-            WORLD.population.creatures[i].location.column,
-            np.row,
-            np.column
-        );
         WORLD.population.creatures[i].location.row = np.row;
         WORLD.population.creatures[i].location.column = np.column;
         WORLD.population.creatures[i].shape.quad = quadForLocation(np.row, np.column);
