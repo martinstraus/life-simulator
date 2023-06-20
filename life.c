@@ -97,6 +97,11 @@ typedef struct Viewport {
     SizeI size;
 } Viewport;
 
+bool isInsideViewport(int x, int y, Viewport *v) {
+    return x >= v->lowerLeft.column && x < v->lowerLeft.column + v->size.width
+        && y >= v->lowerLeft.row && y < v->lowerLeft.row + v->size.height;
+}
+
 Quad makeSquareFromBottomLeft(PointF *corner, float size) {
     Quad q = {
         { corner->y, corner->x,  },
@@ -220,7 +225,7 @@ void display() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glOrtho(0, WINDOW_SIZE.width, 0, WINDOW_SIZE.height, -1, 1); // Set orthographic projection with viewport size of 500
+    glOrtho(0, WINDOW_SIZE.width, 0, WINDOW_SIZE.height, -1, 1); // Set orthographic projection with viewport
     setViewport(&WORLD_VIEWPORT);
     
     glMatrixMode(GL_MODELVIEW);
@@ -244,9 +249,8 @@ void display() {
     glColor3f(1.0f, 1.0f, 1.0f);
     glRasterPos2f(5, 0);
     char s[100];
-    sprintf(s, "Tick: %ld", WORLD.time.current);
+    sprintf(s, "Tick: %ld %s", WORLD.time.current, GAME.paused ? "(Paused)": "");
     glutBitmapString(GLUT_BITMAP_9_BY_15, s);
-
     glFlush();
     glutSwapBuffers();
 }
@@ -404,6 +408,7 @@ void keyboardCallack(unsigned char key, int x, int y) {
     switch (key) {
         case KEY_SPACEBAR: 
             GAME.paused = GAME.paused ? false : true;
+            glutPostRedisplay();
             break;
         case KEY_ESCAPE: 
             GAME.exit = true;
@@ -427,6 +432,14 @@ void idleCallback() {
     }
 }
 
+void mouseMoveCallback(int x, int y) {
+    int yy = WINDOW_SIZE.height-y;
+    if (isInsideViewport(x,yy,&WORLD_VIEWPORT)) {
+        PointI p = {(yy-FOOTER_HEIGHT) / SQUARE_SIZE, x / SQUARE_SIZE};
+        //printf("Mouse moved to (row: %d, col: %d)\n", p.row, p.column);
+    }
+}
+
 void initGraphics(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -436,6 +449,7 @@ void initGraphics(int argc, char** argv) {
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboardCallack);
     glutIdleFunc(idleCallback);
+    glutPassiveMotionFunc(mouseMoveCallback);
     WORLD_VIEWPORT = (Viewport){(PointI){FOOTER_HEIGHT, 0}, (SizeI){SCREEN_HEIGHT, SCREEN_WIDTH}};
     FOOTER_VIEWPORT = (Viewport){(PointI){0, 0}, (SizeI){FOOTER_HEIGHT, SCREEN_WIDTH}};
 }
