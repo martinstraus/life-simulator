@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include <GL/freeglut.h>
 
+#define false 0
+#define true 1
+
+typedef unsigned int bool;
+
 #define PALLETE_SIZE 5
 
 #define SCREEN_WIDTH 1100
@@ -13,10 +18,12 @@
 #define SQUARE_SIZE 2
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
 #define WORLD_HEIGHT SCREEN_WIDTH/SQUARE_SIZE
-#define WORLD_SPEED 1
+#define WORLD_SPEED 100
 
 #define CREATURE_INITIAL_ENERY 1000
 #define CREATURES_RATIO 0.10 // Percentage of world cells with creatures
+
+#define KEY_PAUSE ' '
 
 // General purpose functions
 
@@ -179,7 +186,12 @@ typedef struct World {
     WorldTime time;
 } World;
 
+typedef struct Game {
+    bool paused;
+} Game;
+
 World WORLD;
+Game GAME;
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -339,11 +351,26 @@ void updateWorld() {
 }
 
 void tick() {
-    WORLD.time.current++;
-    printf("Current tick: %ld\n", WORLD.time.current);
-    updateWorld();
-    glutPostRedisplay();
+    if (!GAME.paused) {
+        WORLD.time.current++;
+        printf("Current tick: %ld\n", WORLD.time.current);
+        updateWorld();
+        glutPostRedisplay();
+    }
     glutTimerFunc(WORLD.time.speed, tick, 0);
+}
+
+void togglePause() {
+    GAME.paused = GAME.paused ? false : true;
+}
+
+void keyboardCallack(unsigned char key, int x, int y) {
+    switch (key) {
+        case KEY_PAUSE: 
+            togglePause();
+            break;
+    }
+    printf("Key pressed: %d", key);
 }
 
 void initGraphics(int argc, char** argv) {
@@ -353,6 +380,7 @@ void initGraphics(int argc, char** argv) {
     glutCreateWindow("Life simulator");
     glutTimerFunc(WORLD.time.speed, tick, 0);
     glutDisplayFunc(display);
+    glutKeyboardFunc(keyboardCallack);
 }
 
 void run() {
@@ -360,6 +388,9 @@ void run() {
 }
 
 int main(int argc, char** argv) {
+    GAME = (Game) {
+        false
+    };
     initWorld();
     initGraphics(argc, argv);
     run();
