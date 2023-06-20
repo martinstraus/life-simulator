@@ -12,12 +12,12 @@ typedef unsigned int bool;
 
 #define PALLETE_SIZE 5
 
-#define SCREEN_WIDTH 1100
-#define SCREEN_HEIGHT 700
+#define SCREEN_WIDTH 1000
+#define SCREEN_HEIGHT 800
 
-#define SQUARE_SIZE 2
+#define SQUARE_SIZE 5
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
-#define WORLD_HEIGHT SCREEN_WIDTH/SQUARE_SIZE
+#define WORLD_HEIGHT SCREEN_HEIGHT/SQUARE_SIZE
 #define WORLD_SPEED_MIN 1
 #define WORLD_SPEED_MAX 10000
 #define WORLD_SPEED_FACTOR 10
@@ -93,10 +93,10 @@ typedef struct Quad {
 
 Quad makeSquareFromBottomLeft(PointF *corner, float size) {
     Quad q = {
-        { corner->x, corner->y },
-        { corner->x, corner->y + size },
-        { corner->x + size, corner->y + size },
-        { corner->x + size, corner->y }
+        { corner->y, corner->x,  },
+        { corner->y + size, corner->x },
+        { corner->y + size, corner->x + size },
+        { corner->y, corner->x + size }
     };
     return q;
 }
@@ -258,11 +258,11 @@ void initWorld() {
     // Seed the random number generator
     srand(time(NULL));
 
-    //int creaturesSize = 1;
+    //int creaturesSize = 10;
     int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * CREATURES_RATIO;
 
     WORLD = (World){
-        (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 
+        (SizeI){WORLD_HEIGHT, WORLD_WIDTH}, 
         (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *)),
         (Population){
             creaturesSize,
@@ -326,25 +326,33 @@ PointI positionAfterRandomMovement(PointI current) {
     return np;
 }
 
+bool isOutsideWorldBoundaries(PointI location) {
+    return location.row < 0 || location.row > WORLD.size.height-1 
+        || location.column < 0 || location.column > WORLD.size.width-1;
+}
+
 void updateWorld() {
     // Create a buffer of creature locations
-    Creature ***buffer = malloc(sizeof(Creature **) * WORLD.size.height);
+   /* Creature** buffer = malloc(sizeof(Creature *) * WORLD.size.width * WORLD.size.height);
     for (int r = 0; r < WORLD.size.height; r++) {
-        buffer[r] = malloc(sizeof(Creature *) * WORLD.size.height);
         for (int c = 0; c < WORLD.size.width; c++) {
-            buffer[r][c] == NULL;
+            buffer[(r * WORLD.size.height) + c] = 0;
         }
-    }
+    }*/
 
     // Update the creatures to new locations
     for (int i = 0; i < WORLD.population.size; i++) {
         Creature *c = &(WORLD.population.creatures[i]);
         if (randomInt(0,1) == 1 && c->energy > 0) {
             PointI np = positionAfterRandomMovement(c->location);
-            /* while (buffer[np.row][np.column] != NULL) {
-                np = positionAfterRandomMovement(c.location);
-            }*/
-            buffer[np.row][np.column] = c;
+            while (isOutsideWorldBoundaries(np)) {
+                np = positionAfterRandomMovement(c->location);
+            }
+           /* int index = np.row * WORLD.size.height + np.column;
+            while (buffer[index] != NULL) {
+                np = positionAfterRandomMovement(c->location);
+            }
+            //buffer[index] = c;*/
             c->location.row = np.row;
             c->location.column = np.column;
             c->shape.quad = quadForLocation(np.row, np.column);
@@ -353,10 +361,10 @@ void updateWorld() {
     }
 
     // Free the buffer
-    for (int r = 0; r < WORLD.size.height; r++) {
+   /* for (int r = WORLD.size.height-1; r >= 0; r--) {
         free(buffer[r]);
     }
-    free(buffer);
+    free(buffer);*/
 }
 
 void tick() {
