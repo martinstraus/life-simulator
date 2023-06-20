@@ -12,12 +12,13 @@ typedef unsigned int bool;
 
 #define PALLETE_SIZE 5
 
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 960
+#define SCREEN_HEIGHT 620
+#define FOOTER_HEIGHT 20
 
-#define SQUARE_SIZE 5
+#define SQUARE_SIZE 3
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
-#define WORLD_HEIGHT SCREEN_HEIGHT/SQUARE_SIZE
+#define WORLD_HEIGHT (SCREEN_HEIGHT-FOOTER_HEIGHT)/SQUARE_SIZE
 #define WORLD_SPEED_MIN 1
 #define WORLD_SPEED_MAX 10000
 #define WORLD_SPEED_FACTOR 10
@@ -90,6 +91,11 @@ typedef struct PointF {
 typedef struct Quad {
     PointF bottomLeft, topLeft, topRight, bottomRight;
 } Quad;
+
+typedef struct Viewport {
+    PointI lowerLeft;
+    SizeI size;
+} Viewport;
 
 Quad makeSquareFromBottomLeft(PointF *corner, float size) {
     Quad q = {
@@ -201,6 +207,12 @@ World WORLD;
 Game GAME;
 int WINDOW_ID;
 Creature*** BUFFER; // Buffer for creatures locations, used while updating world.
+Viewport WORLD_VIEWPORT;
+Viewport FOOTER_VIEWPORT;
+
+void setViewport(Viewport* v) {
+    glViewport(v->lowerLeft.column, v->lowerLeft.row, v->size.width, v->size.height);
+}
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -209,6 +221,7 @@ void display() {
     glLoadIdentity();
 
     glOrtho(0, WINDOW_SIZE.width, 0, WINDOW_SIZE.height, -1, 1); // Set orthographic projection with viewport size of 500
+    setViewport(&WORLD_VIEWPORT);
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -224,8 +237,16 @@ void display() {
     for (int i = 0; i < WORLD.population.size; i++) {
         drawSquare(&(WORLD.population.creatures[i].shape));
     }
-    
+
     glEnd();
+
+    setViewport(&FOOTER_VIEWPORT);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glRasterPos2f(5, 0);
+    char s[100];
+    sprintf(s, "Tick: %ld", WORLD.time.current);
+    glutBitmapString(GLUT_BITMAP_9_BY_15, s);
+
     glFlush();
     glutSwapBuffers();
 }
@@ -373,7 +394,6 @@ void updateWorld() {
 void tick() {
     if (!GAME.paused) {
         WORLD.time.current++;
-        printf("Current tick: %ld\n", WORLD.time.current);
         updateWorld();
         glutPostRedisplay();
     }
@@ -416,6 +436,8 @@ void initGraphics(int argc, char** argv) {
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboardCallack);
     glutIdleFunc(idleCallback);
+    WORLD_VIEWPORT = (Viewport){(PointI){FOOTER_HEIGHT, 0}, (SizeI){SCREEN_HEIGHT, SCREEN_WIDTH}};
+    FOOTER_VIEWPORT = (Viewport){(PointI){0, 0}, (SizeI){FOOTER_HEIGHT, SCREEN_WIDTH}};
 }
 
 void run() {
