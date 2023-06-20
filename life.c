@@ -7,15 +7,16 @@
 
 #define PALLETE_SIZE 5
 
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 500
+#define SCREEN_WIDTH 1100
+#define SCREEN_HEIGHT 700
 
-#define SQUARE_SIZE 10
+#define SQUARE_SIZE 2
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
 #define WORLD_HEIGHT SCREEN_WIDTH/SQUARE_SIZE
 #define WORLD_SPEED 1
 
 #define CREATURE_INITIAL_ENERY 1000
+#define CREATURES_RATIO 0.10 // Percentage of world cells with creatures
 
 // General purpose functions
 
@@ -238,7 +239,7 @@ void initWorld() {
     srand(time(NULL));
 
     //int creaturesSize = 1;
-    int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * 0.01;
+    int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * CREATURES_RATIO;
 
     WORLD = (World){
         (SizeI){WORLD_WIDTH, WORLD_HEIGHT}, 

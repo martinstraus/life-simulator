@@ -13,7 +13,8 @@
                 "-lGL",
                 "-lGLU",
                 "-lglut",
-                "-lGLEW"
+                "-lGLEW",
+                "-lm"
             ],
             "options": {
                 "cwd": "${fileDirname}"
