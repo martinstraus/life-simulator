@@ -18,13 +18,18 @@ typedef unsigned int bool;
 #define SQUARE_SIZE 2
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
 #define WORLD_HEIGHT SCREEN_WIDTH/SQUARE_SIZE
-#define WORLD_SPEED 1000
+#define WORLD_SPEED_MIN 1
+#define WORLD_SPEED_MAX 10000
+#define WORLD_SPEED_FACTOR 10
+#define WORLD_SPEED WORLD_SPEED_MIN
 
 #define CREATURE_INITIAL_ENERY 1000
 #define CREATURES_RATIO 0.10 // Percentage of world cells with creatures
 
 #define KEY_SPACEBAR ' '
 #define KEY_ESCAPE 27
+#define KEY_PLUS 43
+#define KEY_MINUS 45
 
 // General purpose functions
 
@@ -371,8 +376,16 @@ void keyboardCallack(unsigned char key, int x, int y) {
         case KEY_ESCAPE: 
             GAME.exit = true;
             break;
+        case KEY_PLUS:
+            WORLD.time.speed = WORLD.time.speed > WORLD_SPEED_MIN ? WORLD.time.speed / WORLD_SPEED_FACTOR : WORLD_SPEED_MIN;
+            //printf("New speed: %ld\n", WORLD.time.speed);
+            break;
+        case KEY_MINUS:
+            WORLD.time.speed = WORLD.time.speed < WORLD_SPEED_MAX ? WORLD.time.speed * WORLD_SPEED_FACTOR : WORLD_SPEED_MAX;
+            //printf("New speed: %ld\n", WORLD.time.speed);
+            break;
     }
-    //printf("Key pressed: %d", key);
+    //printf("Key pressed: %d\n", key);
 }
 
 void idleCallback() {
