@@ -13,7 +13,7 @@ typedef unsigned int bool;
 #define PALLETE_SIZE 5
 
 #define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 800
+#define SCREEN_HEIGHT 600
 
 #define SQUARE_SIZE 5
 #define WORLD_WIDTH SCREEN_WIDTH/SQUARE_SIZE
@@ -200,6 +200,7 @@ typedef struct Game {
 World WORLD;
 Game GAME;
 int WINDOW_ID;
+Creature*** BUFFER; // Buffer for creatures locations, used while updating world.
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -306,6 +307,23 @@ void initWorld() {
             CREATURE_INITIAL_ENERY,
         };
     }
+
+    // Initialize creatures buffer
+    BUFFER = malloc(sizeof(Creature **) * WORLD.size.height);
+    for (int r = 0; r < WORLD.size.height; r++) {
+        BUFFER[r] = malloc(sizeof(Creature *) * WORLD.size.width);
+        for (int c = 0; c < WORLD.size.width; c++) {
+            BUFFER[r][c] = NULL;
+        }
+    }
+}
+
+void cleanCreaturesBuffer() {
+    for (int r = 0; r < WORLD.size.height; r++) {
+        for (int c = 0; c < WORLD.size.width; c++) {
+            BUFFER[r][c] = NULL;
+        }
+    }
 }
 
 PointI positionAfterRandomMovement(PointI current) {
@@ -332,27 +350,17 @@ bool isOutsideWorldBoundaries(PointI location) {
 }
 
 void updateWorld() {
-    // Create a buffer of creature locations
-   /* Creature** buffer = malloc(sizeof(Creature *) * WORLD.size.width * WORLD.size.height);
-    for (int r = 0; r < WORLD.size.height; r++) {
-        for (int c = 0; c < WORLD.size.width; c++) {
-            buffer[(r * WORLD.size.height) + c] = 0;
-        }
-    }*/
+    cleanCreaturesBuffer();
 
     // Update the creatures to new locations
     for (int i = 0; i < WORLD.population.size; i++) {
         Creature *c = &(WORLD.population.creatures[i]);
         if (randomInt(0,1) == 1 && c->energy > 0) {
             PointI np = positionAfterRandomMovement(c->location);
-            while (isOutsideWorldBoundaries(np)) {
+            while (isOutsideWorldBoundaries(np) || BUFFER[np.row][np.column] != NULL) {
                 np = positionAfterRandomMovement(c->location);
             }
-           /* int index = np.row * WORLD.size.height + np.column;
-            while (buffer[index] != NULL) {
-                np = positionAfterRandomMovement(c->location);
-            }
-            //buffer[index] = c;*/
+            BUFFER[np.row][np.column] = c;
             c->location.row = np.row;
             c->location.column = np.column;
             c->shape.quad = quadForLocation(np.row, np.column);
@@ -360,11 +368,6 @@ void updateWorld() {
         }
     }
 
-    // Free the buffer
-   /* for (int r = WORLD.size.height-1; r >= 0; r--) {
-        free(buffer[r]);
-    }
-    free(buffer);*/
 }
 
 void tick() {
