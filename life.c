@@ -338,16 +338,17 @@ void updateWorld() {
 
     // Update the creatures to new locations
     for (int i = 0; i < WORLD.population.size; i++) {
-        if (randomInt(0,1) == 1 && WORLD.population.creatures[i].energy > 0) {
-            PointI np = positionAfterRandomMovement(WORLD.population.creatures[i].location);
+        Creature *c = &(WORLD.population.creatures[i]);
+        if (randomInt(0,1) == 1 && c->energy > 0) {
+            PointI np = positionAfterRandomMovement(c->location);
             /* while (buffer[np.row][np.column] != NULL) {
                 np = positionAfterRandomMovement(c.location);
             }*/
-            buffer[np.row][np.column] = &(WORLD.population.creatures[i]);
-            WORLD.population.creatures[i].location.row = np.row;
-            WORLD.population.creatures[i].location.column = np.column;
-            WORLD.population.creatures[i].shape.quad = quadForLocation(np.row, np.column);
-            WORLD.population.creatures[i].energy--;
+            buffer[np.row][np.column] = c;
+            c->location.row = np.row;
+            c->location.column = np.column;
+            c->shape.quad = quadForLocation(np.row, np.column);
+            c->energy--;
         }
     }
 
