@@ -183,7 +183,7 @@ typedef struct Creature {
     long generation;    // Generation is increased every time a creature is born out of reproduction
     long birth;         // When this creature was born, in ticks.
     Square shape;
-    long energy;        // Some actions have an energy cost.
+    long energy;        // Some actions have an energy cost. Living has an enery cost.
 } Creature;
 
 typedef struct Population {
