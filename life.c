@@ -58,13 +58,21 @@ void setColor(Color *c) {
     glColor3ub(c->r, c->g, c->b);
 }
 
-const Color BLACK =   {0, 0, 0};
-const Color RED =     {255, 153, 153};
-const Color GREEN =   {153, 255, 153};
-const Color BLUE =    {153, 204, 255};
-const Color BROWN =   {176, 152, 126};
+Color BLACK =   {0, 0, 0};
+Color RED =     {255, 153, 153};
+Color GREEN =   {153, 255, 153};
+Color BLUE =    {153, 204, 255};
+Color BROWN =   {176, 152, 126};
 
-Color PALLETE[PALLETE_SIZE] = {BLACK, RED, GREEN, BLUE, BROWN};
+Color PALLETE[PALLETE_SIZE];
+
+void initPallete() {
+    PALLETE[0] = BLACK;
+    PALLETE[1] = RED;
+    PALLETE[2] = GREEN;
+    PALLETE[3] = BLUE;
+    PALLETE[4] = BROWN;
+}
 
 int randomColor() {
     return randomInt(0, PALLETE_SIZE-1);
@@ -157,13 +165,21 @@ typedef struct MediumType {
     Color *color;
 } MediumType;
 
-const MediumType NOTHING = {&BLACK};
-const MediumType DIRT = {&BROWN};
-const MediumType GRASS = {&GREEN};
-const MediumType WATER = {&BLUE};
-const MediumType LAVA = {&RED};
+MediumType NOTHING = {&BLACK};
+MediumType DIRT = {&BROWN};
+MediumType GRASS = {&GREEN};
+MediumType WATER = {&BLUE};
+MediumType LAVA = {&RED};
 
-const MediumType MEDIA[] = {NOTHING, DIRT, GRASS, WATER, LAVA};
+MediumType MEDIA[5];
+
+void initMedia() {
+    MEDIA[0] = NOTHING;
+    MEDIA[1] = DIRT;
+    MEDIA[2] = GRASS;
+    MEDIA[3] = WATER;
+    MEDIA[4] = LAVA;
+}
 
 typedef struct Medium {
     MediumType *type;
@@ -475,6 +491,8 @@ void run() {
 }
 
 int main(int argc, char** argv) {
+    initPallete();
+    initMedia();
     GAME = (Game) {
         false,
         false
