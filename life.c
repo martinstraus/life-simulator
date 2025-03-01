@@ -115,10 +115,10 @@ Quad makeSquareFromBottomLeft(PointF *corner, float size) {
 Quad makeSquareFromCenter(PointF *center, float size) {
     float half = size / (float) 2;
     Quad q = {
-        { center->x - half, center->y + half },
-        { center->x + half, center->y + half },
-        { center->x + half, center->y - half },
-        { center->x - half, center->y - half }
+        { center->y - half, center->x - half },
+        { center->y + half, center->x - half },
+        { center->y + half, center->x + half },
+        { center->y - half, center->x + half }
     };
     return q;
 }
