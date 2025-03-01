@@ -343,6 +343,14 @@ void initWorld() {
     }
 }
 
+void freeWorld() {
+    for (int r = 0; r < WORLD_HEIGHT; r++) {
+        free(WORLD.floor[r]);
+    }
+    free(WORLD.floor);
+    free(WORLD.population.creatures);
+}
+
 void cleanCreaturesBuffer() {
     for (int r = 0; r < WORLD.size.height; r++) {
         for (int c = 0; c < WORLD.size.width; c++) {
@@ -466,5 +474,6 @@ int main(int argc, char** argv) {
     initWorld();
     initGraphics(argc, argv);
     run();
+    freeWorld();
     return 0;
 }
