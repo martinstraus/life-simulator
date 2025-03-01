@@ -250,7 +250,7 @@ void display() {
     glRasterPos2f(5, 0);
     char s[100];
     sprintf(s, "Tick: %ld %s", WORLD.time.current, GAME.paused ? "(Paused)": "");
-    glutBitmapString(GLUT_BITMAP_9_BY_15, s);
+    glutBitmapString(GLUT_BITMAP_9_BY_15, (const unsigned char *)s);
     glFlush();
     glutSwapBuffers();
 }
@@ -335,8 +335,16 @@ void initWorld() {
 
     // Initialize creatures buffer
     BUFFER = malloc(sizeof(Creature **) * WORLD.size.height);
+    if (BUFFER == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(1);
+    }
     for (int r = 0; r < WORLD.size.height; r++) {
         BUFFER[r] = malloc(sizeof(Creature *) * WORLD.size.width);
+        if (BUFFER[r] == NULL) {
+            fprintf(stderr, "Memory allocation failed.  \n");
+            exit(1);
+        }
         for (int c = 0; c < WORLD.size.width; c++) {
             BUFFER[r][c] = NULL;
         }
