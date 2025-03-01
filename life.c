@@ -104,7 +104,7 @@ bool isInsideViewport(int x, int y, Viewport *v) {
 
 Quad makeSquareFromBottomLeft(PointF *corner, float size) {
     Quad q = {
-        { corner->y, corner->x,  },
+        { corner->y, corner->x },
         { corner->y + size, corner->x },
         { corner->y + size, corner->x + size },
         { corner->y, corner->x + size }
