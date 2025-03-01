@@ -319,7 +319,7 @@ void initWorld() {
     for (int i = 0; i < WORLD.population.size; i++) {
         PointI location = randomLocation();
         ADN adn = randomADN();
-        int colorIndex =(int) (adn.value & ADN_COLOR);
+        int colorIndex =(int) (adn.value & ADN_COLOR) % PALLETE_SIZE;;
         WORLD.population.creatures[i] = (Creature){
             location,
             adn,
