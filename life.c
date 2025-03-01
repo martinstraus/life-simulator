@@ -50,7 +50,7 @@ double sigmoid(double x) {
 
 // Colors
 
-typedef struct Color {
+typedef struct {
     int r,g,b;
 } Color;
 
@@ -80,27 +80,27 @@ int randomColor() {
 
 // Geometry
 
-typedef struct SizeI {
+typedef struct {
     int height, width;
 } SizeI;
 
-typedef struct PointI {
+typedef struct {
     int row, column;
 } PointI;
 
-typedef struct SizeF {
+typedef struct {
     float height, width;
 } SizeF;
 
-typedef struct PointF {
+typedef struct {
     float y, x;
 } PointF;
 
-typedef struct Quad {
+typedef struct {
     PointF bottomLeft, topLeft, topRight, bottomRight;
 } Quad;
 
-typedef struct Viewport {
+typedef struct {
     PointI lowerLeft;
     SizeI size;
 } Viewport;
@@ -143,7 +143,7 @@ void drawQuad(Quad *q) {
     glVertex2f(q->bottomRight.x, q->bottomRight.y);
 }
 
-typedef struct Square {
+typedef struct {
     Quad quad;
     Color *color;
 } Square;
@@ -193,7 +193,7 @@ typedef struct ADN {
 
 const uint64_t ADN_COLOR = 0x3;
 
-typedef struct Creature {
+typedef struct {
     PointI location;
     ADN adn;
     long generation;    // Generation is increased every time a creature is born out of reproduction
@@ -202,24 +202,24 @@ typedef struct Creature {
     long energy;        // Some actions have an energy cost. Living has an enery cost.
 } Creature;
 
-typedef struct Population {
+typedef struct {
     int size;
     Creature *creatures;
 } Population;
 
-typedef struct WorldTime {
+typedef struct {
     long speed;    // Time between ticks, in milliseconds.
     long current;  // Current tick; no relation to actual time.
 } WorldTime;
 
-typedef struct World {
+typedef struct {
     SizeI size;
     Medium **floor; // First dimension = rows; second dimension = columns.
     Population population;
     WorldTime time;
 } World;
 
-typedef struct Game {
+typedef struct {
     bool paused;
     bool exit;
 } Game;
