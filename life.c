@@ -25,7 +25,9 @@ typedef unsigned int bool;
 #define WORLD_SPEED WORLD_SPEED_MIN
 
 #define CREATURE_INITIAL_ENERY 1000
-#define CREATURES_RATIO 0.10 // Percentage of world cells with creatures
+#define CREATURES_RATIO 0.01 // Percentage of world cells with creatures
+#define LIMIT_CREATURES_COUNT true
+#define MAX_CREATURES_COUNT 5
 
 #define KEY_SPACEBAR ' '
 #define KEY_ESCAPE 27
@@ -302,6 +304,9 @@ void initWorld() {
 
     //int creaturesSize = 10;
     int creaturesSize = WORLD_WIDTH * WORLD_HEIGHT * CREATURES_RATIO;
+    if (LIMIT_CREATURES_COUNT && creaturesSize > MAX_CREATURES_COUNT) {
+        creaturesSize = MAX_CREATURES_COUNT;
+    }
 
     WORLD = (World){
         (SizeI){WORLD_HEIGHT, WORLD_WIDTH}, 
