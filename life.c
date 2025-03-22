@@ -1,14 +1,10 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include <stdint.h>
 #include <GL/freeglut.h>
-
-#define false 0
-#define true 1
-
-typedef unsigned int bool;
 
 #define PALLETE_SIZE 5
 
