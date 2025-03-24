@@ -144,9 +144,9 @@ void drawQuad(Quad *q) {
 typedef struct {
     Quad quad;
     Color *color;
-} Square;
+} Shape;
 
-void drawSquare(Square *s) {
+void drawSquare(Shape *s) {
     glBegin(GL_QUADS);
     setColor(s->color);
     drawQuad(&(s->quad));
@@ -181,7 +181,7 @@ void initMedia() {
 
 typedef struct Medium {
     MediumType *type;
-    Square shape;
+    Shape shape;
 } Medium;
 
 // ADN defines a set of characteristics that influence the cell's behaviuor.
@@ -196,7 +196,7 @@ typedef struct {
     ADN adn;
     long generation;    // Generation is increased every time a creature is born out of reproduction
     long birth;         // When this creature was born, in ticks.
-    Square shape;
+    Shape shape;
     long energy;        // Some actions have an energy cost. Living has an enery cost.
 } Creature;
 
@@ -324,7 +324,7 @@ void initWorld() {
             MediumType *mediumType = &NOTHING;
             WORLD.floor[r][c] = (Medium){
                 mediumType,
-                (Square) {
+                (Shape) {
                     quadForLocation(r, c),
                     mediumType->color
                 }
@@ -342,7 +342,7 @@ void initWorld() {
             adn,
             0l,
             0,
-            (Square) {
+            (Shape) {
                 quadForLocation(location.row, location.column),
                 &PALLETE[colorIndex+1]
             },
