@@ -110,10 +110,10 @@ bool isInsideViewport(int x, int y, Viewport *v) {
 
 Quad makeSquareFromBottomLeft(PointF *corner, float size) {
     Quad q = {
-        { corner->y, corner->x },
-        { corner->y + size, corner->x },
-        { corner->y + size, corner->x + size },
-        { corner->y, corner->x + size }
+        { .y = corner->y, .x = corner->x },
+        { .y = corner->y + size, .x = corner->x },
+        { .y = corner->y + size, .x = corner->x + size },
+        { .y = corner->y, .x = corner->x + size }
     };
     return q;
 }
@@ -121,16 +121,19 @@ Quad makeSquareFromBottomLeft(PointF *corner, float size) {
 Quad makeSquareFromCenter(PointF *center, float size) {
     float half = size / (float) 2;
     Quad q = {
-        { center->y - half, center->x - half },
-        { center->y + half, center->x - half },
-        { center->y + half, center->x + half },
-        { center->y - half, center->x + half }
+        { .y = center->y - half, .x = center->x - half },
+        { .y = center->y + half, .x = center->x - half },
+        { .y = center->y + half, .x = center->x + half },
+        { .y = center->y - half, .x = center->x + half }
     };
     return q;
 }
 
 Quad quadForLocation(int row, int column) {
-    PointF bl = {row * SQUARE_SIZE, column * SQUARE_SIZE};
+    PointF bl = {
+        .y = row * SQUARE_SIZE, 
+        .x = column * SQUARE_SIZE
+    };
     return makeSquareFromBottomLeft(&bl, SQUARE_SIZE);
 }
 
@@ -154,7 +157,10 @@ void drawSquare(Shape *s) {
 
 // Window
 
-SizeF WINDOW_SIZE = {SCREEN_HEIGHT, SCREEN_WIDTH};
+SizeF WINDOW_SIZE = {
+    .height = SCREEN_HEIGHT, 
+    .width = SCREEN_WIDTH
+};
 
 // World
 
@@ -305,7 +311,10 @@ void initWorld() {
     }
 
     WORLD = (World){
-        (SizeI){WORLD_HEIGHT, WORLD_WIDTH}, 
+        (SizeI){
+            .height = WORLD_HEIGHT, 
+            .width = WORLD_WIDTH
+        }, 
         (Medium **)malloc( WORLD_HEIGHT * sizeof(Medium *)),
         (Population){
             creaturesSize,
@@ -320,7 +329,10 @@ void initWorld() {
 
         // Initialization of the row of squares
         for(int c = 0; c < WORLD_WIDTH; c++) {
-            PointF bl = {c * SQUARE_SIZE, r * SQUARE_SIZE};
+            PointF bl = {
+                .y = c * SQUARE_SIZE, 
+                .x =  r * SQUARE_SIZE
+            };
             MediumType *mediumType = &NOTHING;
             WORLD.floor[r][c] = (Medium){
                 mediumType,
