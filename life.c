@@ -7,7 +7,7 @@
 typedef uint32_t ADN;
 typedef uint32_t Energy;
 
-#define ENERGY_MAX UINT32_MAX
+#define ENERGY_MAX 1000
 
 typedef struct {
     PointI location;
@@ -20,12 +20,14 @@ typedef struct {
     SizeI size;
     Creature* creatures;
     unsigned int creaturesc;
+    unsigned int alivec; // Number of alive creatures
 } World;
 
 typedef uint32_t Tick;
 
 typedef struct {
     Tick tick;
+    bool running;
 } Game;
 
 World* world;
@@ -38,9 +40,10 @@ void initWorld(World* world, unsigned int creatures) {
         world->creatures[i].location.x = rand() % world->size.width;
         world->creatures[i].location.y = rand() % world->size.height;
         world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
-        world->creatures[i].energy = 1000;
+        world->creatures[i].energy = (100 + rand()) % ENERGY_MAX;
         world->creatures[i].alive = true;
     }
+    world->alivec = creatures;
 }
 
 void setColorForCreature(Creature* creature) {
@@ -72,19 +75,25 @@ void display() {
 // Update game state here
 void update(int value) {
     game->tick++;
-
+    //printf("tick %d\n", game->tick);
     for (int i = 0; i < world->creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
         if (creature->alive) {
             creature->energy--;
             if (creature->energy == 0) {
                 creature->alive = false; // Mark as dead if energy is depleted
+                world->alivec--;
             }
         }
     }
 
+    if (world->alivec == 0) {
+        game->running = false; // Stop the game if all creatures are dead
+        glutLeaveMainLoop(); // Exit the main loop if game is not running
+    }
+
     glutPostRedisplay(); // Request display update
-    glutTimerFunc(16, update, 0); // Schedule next update (~60 FPS)
+    glutTimerFunc(16, update, 0); // Schedule next update (~60 FPS)    
 }
 
 int main(int argc, char** argv) {
