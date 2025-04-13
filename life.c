@@ -1,4 +1,5 @@
 #include <GL/freeglut.h>
+#include <time.h>
 #include <primitives.h>
 
 #define CREATURE_SIZE (SizeI) { .width = 5, .height = 5 }
@@ -23,15 +24,23 @@ void initWorld(World* world, unsigned int creatures) {
     for (unsigned int i = 0; i < creatures; ++i) {
         world->creatures[i].location.x = rand() % world->size.width;
         world->creatures[i].location.y = rand() % world->size.height;
-        world->creatures[i].adn = rand();
+        world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
     }
+}
+
+void setColorForCreature(Creature* creature) {
+    float r = ((creature->adn & 0xFF0000) >> 16) / 255.0f;
+    float g = ((creature->adn & 0x00FF00) >> 8) / 255.0f;
+    float b = (creature->adn & 0x0000FF) / 255.0f;
+    glColor3f(r, g, b);
 }
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(0.0f, 0.0f, 1.0f); // Set color to blue
+
     for (int i = 0; i < world-> creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
+        setColorForCreature(creature);
         glBegin(GL_QUADS);
         glVertex2f(creature->location.x, creature->location.y);
         glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y);
@@ -51,6 +60,8 @@ void update(int value) {
 }
 
 int main(int argc, char** argv) {
+    srand((unsigned int)time(NULL)); // Seed the random number generator
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
