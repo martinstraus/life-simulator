@@ -1,13 +1,19 @@
-#include <GL/freeglut.h>
+#include <stdio.h>
 #include <time.h>
+#include <GL/freeglut.h>
 #include <primitives.h>
 
 #define CREATURE_SIZE (SizeI) { .width = 5, .height = 5 }
 typedef uint32_t ADN;
+typedef uint32_t Energy;
+
+#define ENERGY_MAX UINT32_MAX
 
 typedef struct {
     PointI location;
     ADN adn;
+    Energy energy;
+    bool alive;
 } Creature;
 
 typedef struct {
@@ -16,7 +22,14 @@ typedef struct {
     unsigned int creaturesc;
 } World;
 
+typedef uint32_t Tick;
+
+typedef struct {
+    Tick tick;
+} Game;
+
 World* world;
+Game* game;
 
 void initWorld(World* world, unsigned int creatures) {
     world->creatures = (Creature*)malloc(creatures * sizeof(Creature));
@@ -25,6 +38,8 @@ void initWorld(World* world, unsigned int creatures) {
         world->creatures[i].location.x = rand() % world->size.width;
         world->creatures[i].location.y = rand() % world->size.height;
         world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
+        world->creatures[i].energy = 1000;
+        world->creatures[i].alive = true;
     }
 }
 
@@ -40,6 +55,7 @@ void display() {
 
     for (int i = 0; i < world-> creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
+        if (creature->alive) {
         setColorForCreature(creature);
         glBegin(GL_QUADS);
         glVertex2f(creature->location.x, creature->location.y);
@@ -47,13 +63,25 @@ void display() {
         glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y + CREATURE_SIZE.height);
         glVertex2f(creature->location.x, creature->location.y + CREATURE_SIZE.height);
         glEnd();
+        }
     }
     // Draw the world bounds
     glutSwapBuffers();
 }
 
+// Update game state here
 void update(int value) {
-    // Update game state here
+    game->tick++;
+
+    for (int i = 0; i < world->creaturesc; ++i) {
+        Creature* creature = &world->creatures[i];
+        if (creature->alive) {
+            creature->energy--;
+            if (creature->energy == 0) {
+                creature->alive = false; // Mark as dead if energy is depleted
+            }
+        }
+    }
 
     glutPostRedisplay(); // Request display update
     glutTimerFunc(16, update, 0); // Schedule next update (~60 FPS)
@@ -65,6 +93,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
+    game = &(Game) { .tick = 0 };
     world = &(World) { .size = (SizeI) { 1200, 600 } };
     initWorld(world,  1000);
 
