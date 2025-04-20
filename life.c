@@ -10,6 +10,8 @@ typedef uint32_t Energy;
 #define ENERGY_BASE 1000
 #define ENERGY_MAX 10000
 
+// #define TRACE_ENABLED false
+
 typedef struct {
     PointI location;
     ADN adn;
@@ -89,38 +91,77 @@ void setColorForCreature(Creature* creature) {
     glColor3f(r, g, b);
 }
 
+void renderCreature(Creature* creature) {
+    setColorForCreature(creature);
+    glBegin(GL_QUADS);
+    glVertex2f(creature->location.x, creature->location.y);
+    glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y);
+    glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y + CREATURE_SIZE.height);
+    glVertex2f(creature->location.x, creature->location.y + CREATURE_SIZE.height);
+    glEnd();
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     for (int i = 0; i < world-> creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
         if (creature->alive) {
-        setColorForCreature(creature);
-        glBegin(GL_QUADS);
-        glVertex2f(creature->location.x, creature->location.y);
-        glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y);
-        glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y + CREATURE_SIZE.height);
-        glVertex2f(creature->location.x, creature->location.y + CREATURE_SIZE.height);
-        glEnd();
+            renderCreature(creature);
         }
     }
     // Draw the world bounds
     glutSwapBuffers();
 }
 
+void updateCreature(Creature* creature) {
+    if (creature->alive) {
+        //divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
+        float probabilityOfMovement = ((creature->adn & 0x3F) / 63.0f);
+        float r = (float)rand() / RAND_MAX;
+
+        if (r < probabilityOfMovement) {
+            int dx = (rand() % 3) - 1; // Randomly choose -1, 0, or 1
+            int dy = (rand() % 3) - 1; // Randomly choose -1, 0, or 1
+            if (dx != 0 || dy != 0) {
+                int newX = creature->location.x + dx;
+                int newY = creature->location.y + dy;
+
+                // Check bounds
+                if (newX >= 0 && newX < world->size.width && newY >= 0 && newY < world->size.height) {
+                    Cell* oldCell = &world->cells[creature->location.x][creature->location.y];
+                    Cell* newCell = &world->cells[newX][newY];
+
+                    if (newCell->creature == NULL) { // Move only if the cell is unoccupied
+                        newCell->creature = creature; // Move to the new cell
+                        oldCell->creature = NULL; // Leave the old cell
+                        creature->location.x = newX;
+                        creature->location.y = newY;
+                    }
+                    creature->energy--;        
+
+                }
+            }
+
+        }
+        
+        if (creature->energy == 0) {
+            creature->alive = false; // Mark as dead if energy is depleted
+            world->alivec--;
+        }
+    }
+}
+
 // Update game state here
 void update(int value) {
     game->tick++;
-    //printf("tick %d\n", game->tick);
+
+    #ifdef TRACE_ENABLED
+        printf("tick %d\n", game->tick);
+    #endif
+
     for (int i = 0; i < world->creaturesc; ++i) {
-        Creature* creature = &world->creatures[i];
-        if (creature->alive) {
-            creature->energy--;
-            if (creature->energy == 0) {
-                creature->alive = false; // Mark as dead if energy is depleted
-                world->alivec--;
-            }
-        }
+        updateCreature(&world->creatures[i]);
     }
 
     if (world->alivec == 0) {
@@ -138,19 +179,24 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
+    SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
+
     game = &(Game) { .tick = 0 };
     world = &(World) { 
-        .size = (SizeI) { 1200, 600 }, 
+        .size = (SizeI) {
+            .width = screenSize.width,
+            .height = screenSize.height
+         }, 
         .creaturesc = 1000 
     };
     initWorld(world);
 
-    glutInitWindowSize(world->size.width, world->size.height);
+    glutInitWindowSize(screenSize.width, screenSize.height);
     glutCreateWindow("Life Simulator");
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, world->size.width, 0, world->size.height, -1, 1); // Set orthographic projection
+    glOrtho(0, screenSize.width, 0, screenSize.height, -1, 1); // Set orthographic projection
     glMatrixMode(GL_MODELVIEW);
 
     glutDisplayFunc(display);
