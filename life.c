@@ -96,9 +96,9 @@ void renderCreature(Creature* creature) {
     setColorForCreature(creature);
     glBegin(GL_QUADS);
     glVertex2f(creature->location.x, creature->location.y);
-    glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y);
-    glVertex2f(creature->location.x + CREATURE_SIZE.width, creature->location.y + CREATURE_SIZE.height);
-    glVertex2f(creature->location.x, creature->location.y + CREATURE_SIZE.height);
+    glVertex2f(creature->location.x + 1, creature->location.y);
+    glVertex2f(creature->location.x + 1, creature->location.y + 1);
+    glVertex2f(creature->location.x, creature->location.y + 1);
     glEnd();
 }
 
@@ -185,8 +185,8 @@ int main(int argc, char** argv) {
     game = &(Game) { .tick = 0 };
     world = &(World) { 
         .size = (SizeI) {
-            .width = screenSize.width,
-            .height = screenSize.height
+            .width = screenSize.width / CREATURE_SIZE.width,
+            .height = screenSize.height / CREATURE_SIZE.height
          }, 
         .creaturesc = INITIAL_CREATURES_COUNT
     };
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, screenSize.width, 0, screenSize.height, -1, 1); // Set orthographic projection
+    glOrtho(0, world->size.width, 0, world->size.height, -1, 1); // Set orthographic projection
     glMatrixMode(GL_MODELVIEW);
 
     glutDisplayFunc(display);
