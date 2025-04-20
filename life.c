@@ -9,9 +9,18 @@ typedef uint32_t Energy;
 
 #define ENERGY_BASE 1000
 #define ENERGY_MAX 10000
+#define ENERGY_COST_NONE 1
+#define ENERGY_COST_EAT 3
+#define ENERGY_COST_MOVE 10
 #define INITIAL_CREATURES_COUNT 1000
 
 // #define TRACE_ENABLED false
+
+typedef enum {
+    NONE,
+    MOVE,
+    EAT
+} Action;
 
 typedef struct {
     PointI location;
@@ -115,36 +124,70 @@ void display() {
     glutSwapBuffers();
 }
 
+Action decideAction(World* world, Creature* creature) {
+    // divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
+    float probabilityMove = ((creature->adn & 0x3F) / 63.0f);
+    float probabilityEat = (((creature->adn >> 6) & 0x3F) / 63.0f);
+    float probabilityNone = 1.0f - (probabilityNone + probabilityMove);
+
+    float r = (float)rand() / RAND_MAX;
+
+    if (r < probabilityMove) {
+        return MOVE;
+    } else if (r < probabilityMove + probabilityEat) {
+        return EAT;
+    } else {
+        return NONE;
+    }
+}
+
+void none(World* world, Creature* creature) {
+    creature->energy -= ENERGY_COST_NONE; // Decrease energy for doing nothing
+}
+
+void move(World* world, Creature* creature) {
+    int dx = (rand() % 3) - 1; // Randomly choose -1, 0, or 1
+    int dy = (rand() % 3) - 1; // Randomly choose -1, 0, or 1
+    if (dx != 0 || dy != 0) {
+        int newX = creature->location.x + dx;
+        int newY = creature->location.y + dy;
+
+        // Check bounds
+        if (newX >= 0 && newX < world->size.width && newY >= 0 && newY < world->size.height) {
+            Cell* oldCell = &world->cells[creature->location.x][creature->location.y];
+            Cell* newCell = &world->cells[newX][newY];
+
+            if (newCell->creature == NULL) { // Move only if the cell is unoccupied
+                newCell->creature = creature; // Move to the new cell
+                oldCell->creature = NULL; // Leave the old cell
+                creature->location.x = newX;
+                creature->location.y = newY;
+            }
+            creature->energy -= 2; // Decrease energy for moving
+        }
+    }
+}
+
+void eat(World* world, Creature* creature) {
+    creature->energy -= ENERGY_COST_EAT; // Decrease energy for eating
+}
+
 void updateCreature(Creature* creature) {
     if (creature->alive) {
-        //divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
-        float probabilityOfMovement = ((creature->adn & 0x3F) / 63.0f);
-        float r = (float)rand() / RAND_MAX;
-
-        if (r < probabilityOfMovement) {
-            int dx = (rand() % 3) - 1; // Randomly choose -1, 0, or 1
-            int dy = (rand() % 3) - 1; // Randomly choose -1, 0, or 1
-            if (dx != 0 || dy != 0) {
-                int newX = creature->location.x + dx;
-                int newY = creature->location.y + dy;
-
-                // Check bounds
-                if (newX >= 0 && newX < world->size.width && newY >= 0 && newY < world->size.height) {
-                    Cell* oldCell = &world->cells[creature->location.x][creature->location.y];
-                    Cell* newCell = &world->cells[newX][newY];
-
-                    if (newCell->creature == NULL) { // Move only if the cell is unoccupied
-                        newCell->creature = creature; // Move to the new cell
-                        oldCell->creature = NULL; // Leave the old cell
-                        creature->location.x = newX;
-                        creature->location.y = newY;
-                    }
-                    creature->energy--;        
-
-                }
-            }
-
+        switch (decideAction(world, creature)) {
+            case NONE:
+                none(world, creature);
+                break;
+            case MOVE:
+                move(world, creature);
+                break;
+            case EAT:
+                eat(world, creature);
+                break;
+            default:
+                break;
         }
+        
         
         if (creature->energy == 0) {
             creature->alive = false; // Mark as dead if energy is depleted
