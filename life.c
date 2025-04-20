@@ -33,17 +33,20 @@ typedef struct {
 World* world;
 Game* game;
 
-void initWorld(World* world, unsigned int creatures) {
-    world->creatures = (Creature*)malloc(creatures * sizeof(Creature));
-    world->creaturesc = creatures;
-    for (unsigned int i = 0; i < creatures; ++i) {
+void initCreatures(World* world) {
+    world->creatures = (Creature*)malloc(world->creaturesc * sizeof(Creature));
+    for (unsigned int i = 0; i < world->creaturesc; ++i) {
         world->creatures[i].location.x = rand() % world->size.width;
         world->creatures[i].location.y = rand() % world->size.height;
         world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
         world->creatures[i].energy = (100 + rand()) % ENERGY_MAX;
         world->creatures[i].alive = true;
     }
-    world->alivec = creatures;
+    world->alivec = world->creaturesc;
+}
+
+void initWorld(World* world) {
+    initCreatures(world);
 }
 
 void setColorForCreature(Creature* creature) {
@@ -103,8 +106,11 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
     game = &(Game) { .tick = 0 };
-    world = &(World) { .size = (SizeI) { 1200, 600 } };
-    initWorld(world,  1000);
+    world = &(World) { 
+        .size = (SizeI) { 1200, 600 }, 
+        .creaturesc = 1000 
+    };
+    initWorld(world);
 
     glutInitWindowSize(world->size.width, world->size.height);
     glutCreateWindow("Life Simulator");
