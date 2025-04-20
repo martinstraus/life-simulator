@@ -9,6 +9,7 @@ typedef uint32_t Energy;
 
 #define ENERGY_BASE 1000
 #define ENERGY_MAX 10000
+#define INITIAL_CREATURES_COUNT 1000
 
 // #define TRACE_ENABLED false
 
@@ -187,7 +188,7 @@ int main(int argc, char** argv) {
             .width = screenSize.width,
             .height = screenSize.height
          }, 
-        .creaturesc = 1000 
+        .creaturesc = INITIAL_CREATURES_COUNT
     };
     initWorld(world);
 
