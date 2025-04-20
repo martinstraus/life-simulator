@@ -29,6 +29,8 @@ typedef struct {
     unsigned int alivec; // Number of alive creatures
 } World;
 
+Cell** buffer; // Buffer for cells
+
 typedef uint32_t Tick;
 
 typedef struct {
@@ -41,6 +43,7 @@ Game* game;
 
 void initCells(World* world) {
     world->cells = (Cell**)malloc(world->size.width * sizeof(Cell*));
+    buffer = (Cell**)malloc(world->size.width * sizeof(Cell*));
     for (unsigned int i = 0; i < world->size.width; ++i) {
         world->cells[i] = (Cell*)malloc(world->size.height * sizeof(Cell));
         for (unsigned int j = 0; j < world->size.height; ++j) {
@@ -49,17 +52,27 @@ void initCells(World* world) {
     }
 }
 
+PointI randomUnoccupiedCell(World* world) {
+    PointI point;
+    do {
+        point.x = rand() % world->size.width;
+        point.y = rand() % world->size.height;
+    } while (world->cells[point.x][point.y].creature != NULL);
+    return point;
+}
+
 void initCreatures(World* world) {
     world->creatures = (Creature*)malloc(world->creaturesc * sizeof(Creature));
     for (unsigned int i = 0; i < world->creaturesc; ++i) {
-        unsigned int x = rand() % world->size.width;
-        unsigned int y = rand() % world->size.height;
-        world->creatures[i].location.x = x;
-        world->creatures[i].location.y = y;
+        PointI location = randomUnoccupiedCell(world);
+
+        world->creatures[i].location.x = location.x;
+        world->creatures[i].location.y = location.y;
         world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].alive = true;
-        world->cells[x][y].creature = &world->creatures[i];
+
+        world->cells[location.x][location.y].creature = &world->creatures[i];
     }
     world->alivec = world->creaturesc;
 }
