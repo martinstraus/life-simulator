@@ -4,11 +4,13 @@
 #include <primitives.h>
 
 #define CREATURE_SIZE (SizeI) { .width = 5, .height = 5 }
-typedef uint32_t ADN;
+typedef uint32_t DNA;
 typedef uint32_t Energy;
 
 #define ENERGY_BASE 1000
 #define ENERGY_MAX 10000
+#define CELL_FOOD_MAX 100
+#define CELL_FOOD_PROBABILITY 0.2f
 #define ENERGY_COST_NONE 1
 #define ENERGY_COST_EAT 3
 #define ENERGY_COST_MOVE 10
@@ -24,7 +26,7 @@ typedef enum {
 
 typedef struct {
     PointI location;
-    ADN adn;
+    DNA dna;
     Energy energy;
     bool alive;
 } Creature;
@@ -80,7 +82,7 @@ void initCreatures(World* world) {
 
         world->creatures[i].location.x = location.x;
         world->creatures[i].location.y = location.y;
-        world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
+        world->creatures[i].dna = (uint32_t)rand() | ((uint32_t)rand() << 16);
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].alive = true;
 
@@ -95,9 +97,9 @@ void initWorld(World* world) {
 }
 
 void setColorForCreature(Creature* creature) {
-    float r = ((creature->adn & 0xFF0000) >> 16) / 255.0f;
-    float g = ((creature->adn & 0x00FF00) >> 8) / 255.0f;
-    float b = (creature->adn & 0x0000FF) / 255.0f;
+    float r = ((creature->dna & 0xFF0000) >> 16) / 255.0f;
+    float g = ((creature->dna & 0x00FF00) >> 8) / 255.0f;
+    float b = (creature->dna & 0x0000FF) / 255.0f;
     glColor3f(r, g, b);
 }
 
@@ -124,21 +126,46 @@ void display() {
     glutSwapBuffers();
 }
 
-Action decideAction(World* world, Creature* creature) {
+float probabilityMove(Creature* creature) {
     // divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
-    float probabilityMove = ((creature->adn & 0x3F) / 63.0f);
-    float probabilityEat = (((creature->adn >> 6) & 0x3F) / 63.0f);
-    float probabilityNone = 1.0f - (probabilityNone + probabilityMove);
+    return ((creature->dna & 0x3F) / 63.0f);
+}
+
+Energy hungerThreshold(Creature* creature) {
+    // We extract hunger threshold from the adn field. The bitmask 0xFF extracts the lower 8 bits of the adn field, which can represent values in the range [0, 255]. This value is then used to determine the hunger threshold for the creature.
+    return (creature->dna >> 6) & 0xFF;
+}
+
+Action decideAction1(World* world, Creature* creature) {
+    // divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
+    float move = probabilityMove(creature);
+    float probabilityEat = (((creature->dna >> 6) & 0x3F) / 63.0f);
+    float probabilityNone = 1.0f - (probabilityNone + move);
 
     float r = (float)rand() / RAND_MAX;
 
-    if (r < probabilityMove) {
+    if (r < move) {
         return MOVE;
-    } else if (r < probabilityMove + probabilityEat) {
+    } else if (r < move + probabilityEat) {
         return EAT;
     } else {
         return NONE;
     }
+}
+
+Action decideAction2(World* world, Creature* creature) {
+    if (creature->energy < hungerThreshold(creature)) {
+        return EAT;
+    } else {
+        float move = probabilityMove(creature);
+        float r = (float)rand() / RAND_MAX;
+        if (r < move) {
+            return MOVE;
+        } else {
+            return NONE;
+        }
+    }
+
 }
 
 void none(World* world, Creature* creature) {
@@ -174,7 +201,7 @@ void eat(World* world, Creature* creature) {
 
 void updateCreature(Creature* creature) {
     if (creature->alive) {
-        switch (decideAction(world, creature)) {
+        switch (decideAction2(world, creature)) {
             case NONE:
                 none(world, creature);
                 break;
