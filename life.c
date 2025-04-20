@@ -12,9 +12,10 @@ typedef uint32_t Energy;
 #define CELL_FOOD_MAX 100
 #define CELL_FOOD_PROBABILITY 0.2f
 #define ENERGY_COST_NONE 1
-#define ENERGY_COST_EAT 3
+#define ENERGY_COST_EAT 2
 #define ENERGY_COST_MOVE 10
 #define INITIAL_CREATURES_COUNT 1000
+#define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 
 // #define TRACE_ENABLED false
 
@@ -33,6 +34,7 @@ typedef struct {
 
 typedef struct {
     Creature* creature; // Current ocuppying creature. Might be NULL.
+    Energy food; // Food in the cell.
 } Cell;
 
 typedef struct {
@@ -62,6 +64,13 @@ void initCells(World* world) {
         world->cells[i] = (Cell*)malloc(world->size.height * sizeof(Cell));
         for (unsigned int j = 0; j < world->size.height; ++j) {
             world->cells[i][j].creature = NULL;
+
+            // Randomly assign food to cell
+            if ((float)rand() / RAND_MAX < CELL_FOOD_PROBABILITY) {
+                world->cells[i][j].food = (Energy)(rand() % CELL_FOOD_MAX);
+            } else {
+                world->cells[i][j].food = 0;
+            }
         }
     }
 }
@@ -154,22 +163,27 @@ Action decideAction1(World* world, Creature* creature) {
 }
 
 Action decideAction2(World* world, Creature* creature) {
-    if (creature->energy < hungerThreshold(creature)) {
+    bool isHungry = creature->energy < hungerThreshold(creature);
+    bool theresFoodInLocation = world->cells[creature->location.x][creature->location.y].food > 0;
+    if (isHungry && theresFoodInLocation) {
         return EAT;
     } else {
         float move = probabilityMove(creature);
         float r = (float)rand() / RAND_MAX;
-        if (r < move) {
-            return MOVE;
-        } else {
-            return NONE;
-        }
+        return (r < move) ? MOVE : NONE;
     }
+}
 
+void decreaseEnergy(Creature* creature, Energy amount) {
+    if (creature->energy >= amount) {
+        creature->energy -= amount;
+    } else {
+        creature->energy = 0;
+    }
 }
 
 void none(World* world, Creature* creature) {
-    creature->energy -= ENERGY_COST_NONE; // Decrease energy for doing nothing
+    decreaseEnergy(creature, ENERGY_COST_NONE); // Decrease energy for doing nothing
 }
 
 void move(World* world, Creature* creature) {
@@ -190,17 +204,25 @@ void move(World* world, Creature* creature) {
                 creature->location.x = newX;
                 creature->location.y = newY;
             }
-            creature->energy -= 2; // Decrease energy for moving
+            decreaseEnergy(creature, ENERGY_COST_MOVE); // Decrease energy for moving
         }
     }
 }
 
 void eat(World* world, Creature* creature) {
-    creature->energy -= ENERGY_COST_EAT; // Decrease energy for eating
+    Cell* cell = &world->cells[creature->location.x][creature->location.y];
+    if (cell->food > 0) {
+        int foodToEat = cell->food < FOOD_TO_EAT ? cell->food : FOOD_TO_EAT; // Cap the amount of food to eat
+        foodToEat = creature->energy + foodToEat > ENERGY_MAX ? ENERGY_MAX - creature->energy : foodToEat; // Prevent eating more that possible
+        creature->energy += foodToEat; // Increase energy
+        cell->food -= foodToEat; // Decrease food in the cell
+    }
+    decreaseEnergy(creature, ENERGY_COST_EAT); // Decrease energy for eating
 }
 
 void updateCreature(Creature* creature) {
     if (creature->alive) {
+        Action action = decideAction1(world, creature);
         switch (decideAction2(world, creature)) {
             case NONE:
                 none(world, creature);
@@ -215,8 +237,11 @@ void updateCreature(Creature* creature) {
                 break;
         }
         
+        #ifdef TRACE_ENABLED
+            printf("Creature %d action=%d energy=%d\n", creature->dna, action , creature->energy);
+        #endif
         
-        if (creature->energy == 0) {
+        if (creature->energy <= 0) {
             creature->alive = false; // Mark as dead if energy is depleted
             world->alivec--;
         }
