@@ -7,7 +7,8 @@
 typedef uint32_t ADN;
 typedef uint32_t Energy;
 
-#define ENERGY_MAX 1000
+#define ENERGY_BASE 1000
+#define ENERGY_MAX 10000
 
 typedef struct {
     PointI location;
@@ -56,7 +57,7 @@ void initCreatures(World* world) {
         world->creatures[i].location.x = x;
         world->creatures[i].location.y = y;
         world->creatures[i].adn = (uint32_t)rand() | ((uint32_t)rand() << 16);
-        world->creatures[i].energy = (100 + rand()) % ENERGY_MAX;
+        world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].alive = true;
         world->cells[x][y].creature = &world->creatures[i];
     }
