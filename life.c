@@ -270,7 +270,7 @@ void update(int value) {
 }
 
 int main(int argc, char** argv) {
-    srand((unsigned int)time(NULL)); // Seed the random number generator
+    unsigned int seed =  argc > 0 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
