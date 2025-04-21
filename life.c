@@ -52,12 +52,13 @@ typedef uint32_t Tick;
 typedef struct {
     Tick tick;
     bool running;
+    int initalCreaturesCount;
 } Game;
 
 World* world;
 Game* game;
 
-void initCells(World* world) {
+void initCells(Game* game, World* world) {
     world->cells = (Cell**)malloc(world->size.width * sizeof(Cell*));
     buffer = (Cell**)malloc(world->size.width * sizeof(Cell*));
     for (unsigned int i = 0; i < world->size.width; ++i) {
@@ -84,9 +85,9 @@ PointI randomUnoccupiedCell(World* world) {
     return point;
 }
 
-void initCreatures(World* world) {
-    world->creatures = (Creature*)malloc(world->creaturesc * sizeof(Creature));
-    for (unsigned int i = 0; i < world->creaturesc; ++i) {
+void initCreatures(Game* game, World* world) {
+    world->creatures = (Creature*)malloc(game->initalCreaturesCount * sizeof(Creature));
+    for (unsigned int i = 0; i < game->initalCreaturesCount; ++i) {
         PointI location = randomUnoccupiedCell(world);
 
         world->creatures[i].location.x = location.x;
@@ -97,12 +98,13 @@ void initCreatures(World* world) {
 
         world->cells[location.x][location.y].creature = &world->creatures[i];
     }
+    world->creaturesc = game->initalCreaturesCount;
     world->alivec = world->creaturesc;
 }
 
-void initWorld(World* world) {
-    initCells(world);
-    initCreatures(world);
+void initWorld(Game* game, World* world) {
+    initCells(game, world);
+    initCreatures(game, world);
 }
 
 void setColorForCreature(Creature* creature) {
@@ -270,14 +272,17 @@ void update(int value) {
 }
 
 int main(int argc, char** argv) {
-    unsigned int seed =  argc > 0 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
+    unsigned int seed =  argc > 1 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
     SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
 
-    game = &(Game) { .tick = 0 };
+    game = &(Game) { 
+        .tick = 0,
+        .initalCreaturesCount = argc > 2 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT,
+    };
     world = &(World) { 
         .size = (SizeI) {
             .width = screenSize.width / CREATURE_SIZE.width,
@@ -285,7 +290,7 @@ int main(int argc, char** argv) {
          }, 
         .creaturesc = INITIAL_CREATURES_COUNT
     };
-    initWorld(world);
+    initWorld(game, world);
 
     glutInitWindowSize(screenSize.width, screenSize.height);
     glutCreateWindow("Life Simulator");
