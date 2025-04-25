@@ -19,6 +19,8 @@ typedef uint32_t Energy;
 
 // #define TRACE_ENABLED false
 
+typedef uint32_t Tick;
+
 typedef enum {
     NONE,
     MOVE,
@@ -30,6 +32,7 @@ typedef struct {
     DNA dna;
     Energy energy;
     bool alive;
+    Tick deathTick; // Tick when the creature died
 } Creature;
 
 typedef struct {
@@ -46,8 +49,6 @@ typedef struct {
 } World;
 
 Cell** buffer; // Buffer for cells
-
-typedef uint32_t Tick;
 
 typedef struct {
     Tick tick;
@@ -245,6 +246,7 @@ void updateCreature(Creature* creature) {
         
         if (creature->energy <= 0) {
             creature->alive = false; // Mark as dead if energy is depleted
+            creature->deathTick = game->tick; // Store the tick when the creature died
             world->alivec--;
         }
     }
