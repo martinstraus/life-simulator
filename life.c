@@ -343,6 +343,8 @@ int main(int argc, char** argv) {
     game = &(Game) { 
         .tick = 0,
         .initalCreaturesCount = argc > 2 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT,
+        .running = false,
+        .displayInformation = false
     };
     world = &(World) { 
         .size = (SizeI) {
@@ -352,7 +354,8 @@ int main(int argc, char** argv) {
         .creaturesc = INITIAL_CREATURES_COUNT
     };
     initWorld(game, world);
-
+    game->running = true;
+    
     glutInitWindowSize(screenSize.width, screenSize.height);
     glutCreateWindow("Life Simulator");
 
@@ -363,11 +366,9 @@ int main(int argc, char** argv) {
 
     glutDisplayFunc(display);
     glutKeyboardFunc(handleKeypress); // Register the keyboard callback
-    glutTimerFunc(16, update, 0);
+    scheduleUpdate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
-
-    game->running = true; // Start the game
 
     glutMainLoop();
     return 0;
