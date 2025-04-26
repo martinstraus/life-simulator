@@ -148,24 +148,7 @@ Energy hungerThreshold(Creature* creature) {
     return (creature->dna >> 6) & 0xFF;
 }
 
-Action decideAction1(World* world, Creature* creature) {
-    // divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
-    float move = probabilityMove(creature);
-    float probabilityEat = (((creature->dna >> 6) & 0x3F) / 63.0f);
-    float probabilityNone = 1.0f - (probabilityNone + move);
-
-    float r = (float)rand() / RAND_MAX;
-
-    if (r < move) {
-        return MOVE;
-    } else if (r < move + probabilityEat) {
-        return EAT;
-    } else {
-        return NONE;
-    }
-}
-
-Action decideAction2(World* world, Creature* creature) {
+Action decideAction(World* world, Creature* creature) {
     bool isHungry = creature->energy < hungerThreshold(creature);
     bool theresFoodInLocation = world->cells[creature->location.x][creature->location.y].food > 0;
     if (isHungry && theresFoodInLocation) {
@@ -225,8 +208,7 @@ void eat(World* world, Creature* creature) {
 
 void updateCreature(Creature* creature) {
     if (creature->alive) {
-        Action action = decideAction1(world, creature);
-        switch (decideAction2(world, creature)) {
+        switch (decideAction(world, creature)) {
             case NONE:
                 none(world, creature);
                 break;
