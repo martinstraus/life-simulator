@@ -252,8 +252,17 @@ void updateCreature(Creature* creature) {
     }
 }
 
+void update(int value);
+
+void scheduleUpdate() {
+    glutTimerFunc(16, update, 0); // Schedule next update (~60 FPS)
+}
+
 // Update game state here
 void update(int value) {
+    if (!game->running) {
+        return;
+    }
     game->tick++;
 
     #ifdef TRACE_ENABLED
@@ -270,11 +279,26 @@ void update(int value) {
     }
 
     glutPostRedisplay(); // Request display update
-    glutTimerFunc(16, update, 0); // Schedule next update (~60 FPS)    
+    scheduleUpdate(); // Schedule next update
+}
+
+void handleKeypress(unsigned char key, int x, int y) {
+    switch (key) {
+        case 27: // Escape key
+            glutLeaveMainLoop(); // Exit the main loop
+            break;
+        case 'p': // Pause the game
+        case 'P':
+            game->running = !game->running; // Toggle the running state
+            if (game->running) {
+                scheduleUpdate(); // Schedule the next update if the game is running
+            }
+            break;
+    }
 }
 
 int main(int argc, char** argv) {
-    unsigned int seed =  argc > 1 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
+    unsigned int seed = argc > 1 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -303,9 +327,12 @@ int main(int argc, char** argv) {
     glMatrixMode(GL_MODELVIEW);
 
     glutDisplayFunc(display);
+    glutKeyboardFunc(handleKeypress); // Register the keyboard callback
     glutTimerFunc(16, update, 0);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
+
+    game->running = true; // Start the game
 
     glutMainLoop();
     return 0;
