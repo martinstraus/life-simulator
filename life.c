@@ -16,7 +16,7 @@ typedef uint32_t Energy;
 #define ENERGY_COST_MOVE 10
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
-
+#define SPEED_DELTA 10
 //#define DEBUG_ENABLED
 //#define TRACE_ENABLED
 
@@ -56,6 +56,8 @@ typedef struct {
     bool running;
     int initalCreaturesCount;
     bool displayInformation;
+    int updateInterval;
+    bool timerScheduled;
 } Game;
 
 World* world;
@@ -162,6 +164,12 @@ void displayTick() {
     displayText(tickText, 10.0f, 1.0f);
 }
 
+void displayUpdateInterval() {
+    char fpsText[50];
+    snprintf(fpsText, sizeof(fpsText), "Update interval: %d milliseconds", game->updateInterval);
+    displayText(fpsText, 60.0f, 1.0f);
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -175,6 +183,7 @@ void display() {
     if (game->displayInformation) {
         displayTick();
         displayPopulation();
+        displayUpdateInterval();
     }
     if (!game->running) displayPausedText();
 
@@ -284,11 +293,17 @@ void updateCreature(Creature* creature) {
 void update(int value);
 
 void scheduleUpdate() {
-    glutTimerFunc(16, update, 0); // Schedule next update (~60 FPS)
+    if (game->timerScheduled) {
+        return;
+    }
+    game->timerScheduled = true;
+    glutTimerFunc(game->updateInterval, update, 0);
 }
 
 // Update game state here
 void update(int value) {
+    game->timerScheduled = false; // Reset the timer scheduled flag
+
     if (!game->running) {
         glutPostRedisplay(); // Request display update
         return;
@@ -322,12 +337,20 @@ void handleKeypress(unsigned char key, int x, int y) {
         case 'P':
             game->running = !game->running; // Toggle the running state
             if (game->running) {
-                scheduleUpdate(); // Schedule the next update if the game is running
+                scheduleUpdate();
             }
             break;
         case 'i':
         case 'I':
             game->displayInformation = !game->displayInformation;
+            break;
+        case '+':
+            game->updateInterval = game->updateInterval > SPEED_DELTA ? game->updateInterval - SPEED_DELTA : SPEED_DELTA; // Increase speed
+            scheduleUpdate();
+            break;
+        case '-':
+            game->updateInterval += SPEED_DELTA;
+            scheduleUpdate();
             break;
     }
 }
@@ -344,7 +367,9 @@ int main(int argc, char** argv) {
         .tick = 0,
         .initalCreaturesCount = argc > 2 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT,
         .running = false,
-        .displayInformation = false
+        .displayInformation = false,
+        .updateInterval = 100,
+        .timerScheduled = false
     };
     world = &(World) { 
         .size = (SizeI) {
