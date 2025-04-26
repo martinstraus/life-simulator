@@ -17,7 +17,8 @@ typedef uint32_t Energy;
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 
-// #define TRACE_ENABLED false
+//#define DEBUG_ENABLED
+//#define TRACE_ENABLED
 
 typedef uint32_t Tick;
 
@@ -208,7 +209,8 @@ void eat(World* world, Creature* creature) {
 
 void updateCreature(Creature* creature) {
     if (creature->alive) {
-        switch (decideAction(world, creature)) {
+        Action action = decideAction(world, creature);
+        switch (action) {
             case NONE:
                 none(world, creature);
                 break;
@@ -222,7 +224,7 @@ void updateCreature(Creature* creature) {
                 break;
         }
         
-        #ifdef TRACE_ENABLED
+        #ifdef DEBUG_ENABLED
             printf("Creature %d action=%d energy=%d\n", creature->dna, action , creature->energy);
         #endif
         
@@ -230,6 +232,9 @@ void updateCreature(Creature* creature) {
             creature->alive = false; // Mark as dead if energy is depleted
             creature->deathTick = game->tick; // Store the tick when the creature died
             world->alivec--;
+            #ifdef TRACE_ENABLED
+                printf("Creature %d died at tick %d\n", creature->dna, game->tick);
+            #endif
         }
     }
 }
