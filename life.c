@@ -52,15 +52,10 @@ typedef struct {
 Cell** buffer; // Buffer for cells
 
 typedef struct {
-    bool population;
-    bool tick;
-} Display;
-
-typedef struct {
     Tick tick;
     bool running;
     int initalCreaturesCount;
-    Display display;
+    bool displayInformation;
 } Game;
 
 World* world;
@@ -177,8 +172,10 @@ void display() {
         }
     }
 
-    if (game->display.population) displayPopulation();
-    if (game->display.tick) displayTick();
+    if (game->displayInformation) {
+        displayTick();
+        displayPopulation();
+    }
     if (!game->running) displayPausedText();
 
     glutSwapBuffers();
@@ -330,8 +327,7 @@ void handleKeypress(unsigned char key, int x, int y) {
             break;
         case 'i':
         case 'I':
-            game->display.population = !game->display.population;
-            game->display.tick = !game->display.tick; 
+            game->displayInformation = !game->displayInformation;
             break;
     }
 }
