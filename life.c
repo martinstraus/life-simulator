@@ -126,16 +126,36 @@ void renderCreature(Creature* creature) {
     glEnd();
 }
 
+void displayPausedText() {
+    glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+
+    // Calculate the center position for the text
+    float centerX = world->size.width / 2.0f - 2.5f; // Adjust for text width
+    float centerY = world->size.height / 2.0f;
+
+    glRasterPos2f(centerX, centerY); // Set position near the center
+
+    const char* pausedText = "PAUSED";
+    for (const char* c = pausedText; *c != '\0'; ++c) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c); // Render each character
+    }
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    for (int i = 0; i < world-> creaturesc; ++i) {
+    for (int i = 0; i < world->creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
         if (creature->alive) {
             renderCreature(creature);
         }
     }
-    // Draw the world bounds
+
+    // Draw "PAUSED" if the game is paused
+    if (!game->running) {
+        displayPausedText();
+    }
+
     glutSwapBuffers();
 }
 
@@ -248,8 +268,10 @@ void scheduleUpdate() {
 // Update game state here
 void update(int value) {
     if (!game->running) {
+        glutPostRedisplay(); // Request display update
         return;
     }
+
     game->tick++;
 
     #ifdef TRACE_ENABLED
