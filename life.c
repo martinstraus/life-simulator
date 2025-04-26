@@ -53,6 +53,7 @@ Cell** buffer; // Buffer for cells
 
 typedef struct {
     bool population;
+    bool tick;
 } Display;
 
 typedef struct {
@@ -131,6 +132,14 @@ void renderCreature(Creature* creature) {
     glEnd();
 }
 
+void displayText(const char* text, float x, float y) {
+    glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+    glRasterPos2f(x, y); // Set position for the text
+    for (const char* c = text; *c != '\0'; ++c) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); // Render each character
+    }
+}
+
 void displayPausedText() {
     glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
 
@@ -147,19 +156,15 @@ void displayPausedText() {
 }
 
 void displayPopulation() {
-    glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
-
-    // Calculate the position for the population text
-    float posX = 1.0f;
-    float posY = 1.0f;
-
-    glRasterPos2f(posX, posY); // Set position for the text
-
     char populationText[50];
     snprintf(populationText, sizeof(populationText), "Population: %d", world->alivec);
-    for (const char* c = populationText; *c != '\0'; ++c) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); // Render each character
-    }
+    displayText(populationText, 40.0f, 1.0f);
+}
+
+void displayTick() {
+    char tickText[50];
+    snprintf(tickText, sizeof(tickText), "Tick: %d", game->tick);
+    displayText(tickText, 10.0f, 1.0f);
 }
 
 void display() {
@@ -172,13 +177,9 @@ void display() {
         }
     }
 
-    if (game->display.population) {
-        displayPopulation();
-    }
-
-    if (!game->running) {
-        displayPausedText();
-    }
+    if (game->display.population) displayPopulation();
+    if (game->display.tick) displayTick();
+    if (!game->running) displayPausedText();
 
     glutSwapBuffers();
 }
@@ -329,7 +330,8 @@ void handleKeypress(unsigned char key, int x, int y) {
             break;
         case 'i':
         case 'I':
-            game->display.population = !game->display.population; // Toggle population display
+            game->display.population = !game->display.population;
+            game->display.tick = !game->display.tick; 
             break;
     }
 }
