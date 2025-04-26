@@ -52,9 +52,14 @@ typedef struct {
 Cell** buffer; // Buffer for cells
 
 typedef struct {
+    bool population;
+} Display;
+
+typedef struct {
     Tick tick;
     bool running;
     int initalCreaturesCount;
+    Display display;
 } Game;
 
 World* world;
@@ -141,6 +146,22 @@ void displayPausedText() {
     }
 }
 
+void displayPopulation() {
+    glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+
+    // Calculate the position for the population text
+    float posX = 1.0f;
+    float posY = 1.0f;
+
+    glRasterPos2f(posX, posY); // Set position for the text
+
+    char populationText[50];
+    snprintf(populationText, sizeof(populationText), "Population: %d", world->alivec);
+    for (const char* c = populationText; *c != '\0'; ++c) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); // Render each character
+    }
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -151,7 +172,10 @@ void display() {
         }
     }
 
-    // Draw "PAUSED" if the game is paused
+    if (game->display.population) {
+        displayPopulation();
+    }
+
     if (!game->running) {
         displayPausedText();
     }
@@ -302,6 +326,10 @@ void handleKeypress(unsigned char key, int x, int y) {
             if (game->running) {
                 scheduleUpdate(); // Schedule the next update if the game is running
             }
+            break;
+        case 'i':
+        case 'I':
+            game->display.population = !game->display.population; // Toggle population display
             break;
     }
 }
