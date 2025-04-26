@@ -7,6 +7,7 @@
 typedef uint32_t DNA;
 typedef uint32_t Energy;
 
+#define MAX_CREATURES 5000
 #define ENERGY_BASE 1000
 #define ENERGY_MAX 10000
 #define CELL_FOOD_MAX 100
@@ -14,6 +15,8 @@ typedef uint32_t Energy;
 #define ENERGY_COST_NONE 1
 #define ENERGY_COST_EAT 2
 #define ENERGY_COST_MOVE 10
+#define REPRODUCTION_ENERGY_TRHESHOLD 1000
+#define REPRODUCTION_AGE 500
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 #define SPEED_DELTA 10
@@ -23,9 +26,16 @@ typedef uint32_t Energy;
 typedef uint32_t Tick;
 
 typedef enum {
+    NOT_AVAILABLE,
+    FREE,
+    OCCUPIED
+} CellState;
+
+typedef enum {
     NONE,
     MOVE,
-    EAT
+    EAT,
+    REPRODUCE
 } Action;
 
 typedef struct {
@@ -33,6 +43,7 @@ typedef struct {
     DNA dna;
     Energy energy;
     bool alive;
+    Tick birthTick; // Tick when the creature was born
     Tick deathTick; // Tick when the creature died
 } Creature;
 
@@ -47,6 +58,7 @@ typedef struct {
     Creature* creatures;
     unsigned int creaturesc;
     unsigned int alivec; // Number of alive creatures
+    unsigned int reproductionc; // Number of reproductions
 } World;
 
 Cell** buffer; // Buffer for cells
@@ -55,6 +67,7 @@ typedef struct {
     Tick tick;
     bool running;
     int initalCreaturesCount;
+    int maxCreaturesCount;
     bool displayInformation;
     int updateInterval;
     bool timerScheduled;
@@ -91,14 +104,14 @@ PointI randomUnoccupiedCell(World* world) {
 }
 
 void initCreatures(Game* game, World* world) {
-    world->creatures = (Creature*)malloc(game->initalCreaturesCount * sizeof(Creature));
+    world->creatures = (Creature*)malloc(game->maxCreaturesCount * sizeof(Creature));
     for (unsigned int i = 0; i < game->initalCreaturesCount; ++i) {
         PointI location = randomUnoccupiedCell(world);
-
         world->creatures[i].location.x = location.x;
         world->creatures[i].location.y = location.y;
         world->creatures[i].dna = (uint32_t)rand() | ((uint32_t)rand() << 16);
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
+        world->creatures[i].birthTick = game->tick;
         world->creatures[i].alive = true;
 
         world->cells[location.x][location.y].creature = &world->creatures[i];
@@ -166,8 +179,14 @@ void displayTick() {
 
 void displayUpdateInterval() {
     char fpsText[50];
-    snprintf(fpsText, sizeof(fpsText), "Update interval: %d milliseconds", game->updateInterval);
+    snprintf(fpsText, sizeof(fpsText), "Update interval: %dms", game->updateInterval);
     displayText(fpsText, 60.0f, 1.0f);
+}
+
+void displayReproductions() {
+    char text[50];
+    snprintf(text, sizeof(text), "Reproductions: %d", world->reproductionc);
+    displayText(text, 80.0f, 1.0f);
 }
 
 void display() {
@@ -184,6 +203,7 @@ void display() {
         displayTick();
         displayPopulation();
         displayUpdateInterval();
+        displayReproductions();
     }
     if (!game->running) displayPausedText();
 
@@ -202,14 +222,17 @@ Energy hungerThreshold(Creature* creature) {
 
 Action decideAction(World* world, Creature* creature) {
     bool isHungry = creature->energy < hungerThreshold(creature);
-    bool theresFoodInLocation = world->cells[creature->location.x][creature->location.y].food > 0;
-    if (isHungry && theresFoodInLocation) {
-        return EAT;
-    } else {
-        float move = probabilityMove(creature);
-        float r = (float)rand() / RAND_MAX;
-        return (r < move) ? MOVE : NONE;
+    if (isHungry) {
+        bool theresFoodInLocation = world->cells[creature->location.x][creature->location.y].food > 0;
+        if (theresFoodInLocation) return EAT;
     }
+    Tick age = game->tick - creature->birthTick;
+    if (age > REPRODUCTION_AGE && creature->energy >= REPRODUCTION_ENERGY_TRHESHOLD) { 
+        return REPRODUCE;
+    }
+    float move = probabilityMove(creature);
+    float r = (float)rand() / RAND_MAX;
+    return (r < move) ? MOVE : NONE;
 }
 
 void decreaseEnergy(Creature* creature, Energy amount) {
@@ -258,6 +281,82 @@ void eat(World* world, Creature* creature) {
     decreaseEnergy(creature, ENERGY_COST_EAT); // Decrease energy for eating
 }
 
+CellState cellState(World* world, int x, int y) {
+    if (x < 0 || x >= world->size.width || y < 0 || y >= world->size.height) {
+        return NOT_AVAILABLE; // Out of bounds
+    }
+    Cell* cell = &world->cells[x][y];
+    if (cell->creature != NULL) {
+        return OCCUPIED; // Cell is occupied by a creature
+    }
+    return FREE; // Cell is free
+}
+
+typedef struct {
+    PointI location;
+    CellState state;
+} SurroundingLocation;
+
+SurroundingLocation surroundingLocation(World* world, int x, int y) {
+    SurroundingLocation location;
+    location.location.x = x;
+    location.location.y = y;
+    location.state = cellState(world, x, y);
+    return location;
+}
+
+void cloneInto(Creature* parent, Creature* clone, PointI location) {
+    clone->location = location;
+    clone->dna = parent->dna; // Clone the DNA
+    clone->energy = parent->energy / 2; // Half the energy for the clone
+    clone->alive = true;
+    clone->birthTick = game->tick;
+}
+
+void reproduce(World* world, Creature* creature) {
+    if (world->creaturesc >= game->maxCreaturesCount) return;
+    if (creature->energy < REPRODUCTION_ENERGY_TRHESHOLD) return;
+
+    PointI l = creature->location;
+
+    SurroundingLocation surroundingLocations[9] = {
+        surroundingLocation(world, l.x - 1, l.y + 1),
+        surroundingLocation(world, l.x    , l.y + 1),
+        surroundingLocation(world, l.x + 1, l.y + 1),
+        surroundingLocation(world, l.x - 1, l.y    ),
+        surroundingLocation(world, l.x    , l.y    ),
+        surroundingLocation(world, l.x + 1, l.y    ),
+        surroundingLocation(world, l.x - 1, l.y - 1),
+        surroundingLocation(world, l.x    , l.y - 1),
+        surroundingLocation(world, l.x + 1, l.y - 1)
+    };
+
+    int freeCount = 0;
+    PointI selected[0];
+    for (int i = 0; i < 9; ++i) {
+        if (surroundingLocations[i].state == FREE) {
+            selected[freeCount++] = surroundingLocations[i].location;
+        }
+    }
+    if (freeCount >= 2) {
+        int r1 = rand() % freeCount;
+        PointI l1 = selected[r1];
+        int r2 = rand() % freeCount;
+        while (r2 == r1) {
+            r2 = rand() % freeCount;
+        }
+        PointI l2 = selected[r2];
+
+        cloneInto(creature, &world->creatures[world->creaturesc], l1);
+        cloneInto(creature, &world->creatures[world->creaturesc], l2);
+
+        // This should be improved. The creature does not actually die.
+        creature->alive = false;
+        world->alivec--;
+        world->reproductionc += 2;
+    }
+}
+
 void updateCreature(Creature* creature) {
     if (creature->alive) {
         Action action = decideAction(world, creature);
@@ -270,6 +369,9 @@ void updateCreature(Creature* creature) {
                 break;
             case EAT:
                 eat(world, creature);
+                break;
+            case REPRODUCE:
+                reproduce(world, creature);
                 break;
             default:
                 break;
@@ -363,9 +465,11 @@ int main(int argc, char** argv) {
 
     SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
 
+    int initialCreaturesCount = argc > 2 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT;
     game = &(Game) { 
         .tick = 0,
-        .initalCreaturesCount = argc > 2 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT,
+        .maxCreaturesCount = MAX_CREATURES,
+        .initalCreaturesCount = initialCreaturesCount > MAX_CREATURES ? MAX_CREATURES : initialCreaturesCount,
         .running = false,
         .displayInformation = false,
         .updateInterval = 100,
