@@ -78,6 +78,10 @@ typedef struct {
 World* world;
 Game* game;
 
+Tick creatureAge(Creature* creature) {
+    return creature->alive ? game->tick - creature->birthTick : creature->deathTick - creature->birthTick;
+}
+
 void initCells(Game* game, World* world) {
     world->cells = (Cell**)malloc(world->size.width * sizeof(Cell*));
     buffer = (Cell**)malloc(world->size.width * sizeof(Cell*));
@@ -193,7 +197,7 @@ void displayReproductions() {
 void displaySelection() {
     if (game->selection != NULL) {
         char text[50];
-        snprintf(text, sizeof(text), "Creature: age=%d, energy=%d", game->tick - game->selection->birthTick, game->selection->energy);
+        snprintf(text, sizeof(text), "Creature: age=%d, energy=%d", creatureAge(game->selection), game->selection->energy);
         displayText(text, 120.0f, 1.0f);
     }
 }
@@ -227,6 +231,11 @@ float probabilityMove(Creature* creature) {
     return ((creature->dna & 0x3F) / 63.0f);
 }
 
+float probabilityReproduce(Creature* creature) {
+    // divides by 127.0f because the bitmask 0xFE bits 1 to 7.
+    return ((creature->dna & 0xFE) >> 1) / 127.0f;
+}
+
 Energy hungerThreshold(Creature* creature) {
     // We extract hunger threshold from the adn field. The bitmask 0xFF extracts the lower 8 bits of the adn field, which can represent values in the range [0, 255]. This value is then used to determine the hunger threshold for the creature.
     return (creature->dna >> 6) & 0xFF;
@@ -238,9 +247,13 @@ Action decideAction(World* world, Creature* creature) {
         bool theresFoodInLocation = world->cells[creature->location.x][creature->location.y].food > 0;
         if (theresFoodInLocation) return EAT;
     }
-    Tick age = game->tick - creature->birthTick;
-    if (age > REPRODUCTION_AGE && creature->energy >= REPRODUCTION_ENERGY_TRHESHOLD) { 
-        return REPRODUCE;
+    Tick age = creatureAge(creature);
+    if (age > REPRODUCTION_AGE && creature->energy >= REPRODUCTION_ENERGY_TRHESHOLD) {
+        float reproduce = probabilityReproduce(creature);
+        float r = (float)rand() / RAND_MAX;
+        if (r < reproduce) {
+            return REPRODUCE;
+        }
     }
     float move = probabilityMove(creature);
     float r = (float)rand() / RAND_MAX;
