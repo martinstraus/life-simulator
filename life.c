@@ -348,8 +348,9 @@ void reproduce(World* world, Creature* creature) {
 
 
         cloneInto(creature, &(world->creatures[world->creaturesc++]), l1);
+        world->alivec++;
         cloneInto(creature, &(world->creatures[world->creaturesc++]), l2);
-        world->alivec+2;
+        world->alivec++;
 
         // This should be improved. The creature does not actually die.
         creature->alive = false;
