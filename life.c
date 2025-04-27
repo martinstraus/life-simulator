@@ -72,6 +72,7 @@ typedef struct {
     bool displayInformation;
     int updateInterval;
     bool timerScheduled;
+    Creature* selection;
 } Game;
 
 World* world;
@@ -189,6 +190,14 @@ void displayReproductions() {
     displayText(text, 90.0f, 1.0f);
 }
 
+void displaySelection() {
+    if (game->selection != NULL) {
+        char text[50];
+        snprintf(text, sizeof(text), "Creature: age=%d, energy=%d", game->tick - game->selection->birthTick, game->selection->energy);
+        displayText(text, 120.0f, 1.0f);
+    }
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -204,6 +213,9 @@ void display() {
         displayPopulation();
         displayUpdateInterval();
         displayReproductions();
+    }
+    if (game->selection != NULL) {
+        displaySelection();
     }
     if (!game->running) displayPausedText();
 
@@ -463,6 +475,34 @@ void handleKeypress(unsigned char key, int x, int y) {
     }
 }
 
+PointI screenToWorld(int x, int y) {
+    // Invert the y-coordinate to match OpenGL's coordinate system
+    int invertedY = world->size.height * CREATURE_SIZE.height - y;
+
+    PointI point;
+    point.x = x / CREATURE_SIZE.width;
+    point.y = invertedY / CREATURE_SIZE.height;
+    return point;
+}
+
+void selectCreature(int x, int y) {
+    PointI point = screenToWorld(x, y);
+    if (point.x < 0 || point.x >= world->size.width || point.y < 0 || point.y >= world->size.height) {
+        return; // Out of bounds
+    }
+    Cell* cell = &world->cells[point.x][point.y];
+    game->selection = cell->creature != NULL ? cell->creature : NULL;
+}
+
+void handleMouseClick(int button, int state, int x, int y) {
+    if (state == GLUT_DOWN) { // Check if the mouse button was pressed
+        if (button == GLUT_LEFT_BUTTON) {
+            printf("Mouse click at (%d, %d)\n", x, y);
+            selectCreature(x, y);
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     unsigned int seed = argc > 1 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
 
@@ -479,7 +519,8 @@ int main(int argc, char** argv) {
         .running = false,
         .displayInformation = true,
         .updateInterval = 100,
-        .timerScheduled = false
+        .timerScheduled = false,
+        .selection = NULL
     };
     world = &(World) { 
         .size = (SizeI) {
@@ -501,6 +542,7 @@ int main(int argc, char** argv) {
 
     glutDisplayFunc(display);
     glutKeyboardFunc(handleKeypress); // Register the keyboard callback
+    glutMouseFunc(handleMouseClick); // Register the mouse callback
     scheduleUpdate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
