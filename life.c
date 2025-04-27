@@ -16,7 +16,7 @@ typedef uint32_t Energy;
 #define ENERGY_COST_EAT 2
 #define ENERGY_COST_MOVE 10
 #define REPRODUCTION_ENERGY_TRHESHOLD 1000
-#define REPRODUCTION_AGE 500
+#define REPRODUCTION_AGE 100
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 #define SPEED_DELTA 10
@@ -113,8 +113,7 @@ void initCreatures(Game* game, World* world) {
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].birthTick = game->tick;
         world->creatures[i].alive = true;
-
-        world->cells[location.x][location.y].creature = &world->creatures[i];
+        world->cells[location.x][location.y].creature = &world->creatures[i]; // Assign the creature to the cell
     }
     world->creaturesc = game->initalCreaturesCount;
     world->alivec = world->creaturesc;
@@ -186,7 +185,7 @@ void displayUpdateInterval() {
 void displayReproductions() {
     char text[50];
     snprintf(text, sizeof(text), "Reproductions: %d", world->reproductionc);
-    displayText(text, 80.0f, 1.0f);
+    displayText(text, 90.0f, 1.0f);
 }
 
 void display() {
@@ -314,7 +313,7 @@ void cloneInto(Creature* parent, Creature* clone, PointI location) {
 }
 
 void reproduce(World* world, Creature* creature) {
-    if (world->creaturesc >= game->maxCreaturesCount) return;
+    if (world->creaturesc+2 >= game->maxCreaturesCount) return;
     if (creature->energy < REPRODUCTION_ENERGY_TRHESHOLD) return;
 
     PointI l = creature->location;
@@ -347,8 +346,10 @@ void reproduce(World* world, Creature* creature) {
         }
         PointI l2 = selected[r2];
 
-        cloneInto(creature, &world->creatures[world->creaturesc], l1);
-        cloneInto(creature, &world->creatures[world->creaturesc], l2);
+
+        cloneInto(creature, &(world->creatures[world->creaturesc++]), l1);
+        cloneInto(creature, &(world->creatures[world->creaturesc++]), l2);
+        world->alivec+2;
 
         // This should be improved. The creature does not actually die.
         creature->alive = false;
@@ -471,7 +472,7 @@ int main(int argc, char** argv) {
         .maxCreaturesCount = MAX_CREATURES,
         .initalCreaturesCount = initialCreaturesCount > MAX_CREATURES ? MAX_CREATURES : initialCreaturesCount,
         .running = false,
-        .displayInformation = false,
+        .displayInformation = true,
         .updateInterval = 100,
         .timerScheduled = false
     };
