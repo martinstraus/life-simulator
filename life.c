@@ -430,6 +430,7 @@ void updateCreature(Creature* creature) {
 void update(int value);
 
 void scheduleUpdate() {
+    // This synchronization is needed to avoid multiple calls to update() in the same tick.
     if (game->timerScheduled) {
         return;
     }
