@@ -4,7 +4,7 @@
 #include <primitives.h>
 
 #define CREATURE_SIZE (SizeI) { .width = 5, .height = 5 }
-typedef uint32_t DNA;
+typedef uint32_t Genome;
 typedef uint32_t Energy;
 
 #define MAX_CREATURES 5000
@@ -40,7 +40,7 @@ typedef enum {
 
 typedef struct {
     PointI location;
-    DNA dna;
+    Genome genome;
     Energy energy;
     bool alive;
     Tick birthTick; // Tick when the creature was born
@@ -114,7 +114,7 @@ void initCreatures(Game* game, World* world) {
         PointI location = randomUnoccupiedCell(world);
         world->creatures[i].location.x = location.x;
         world->creatures[i].location.y = location.y;
-        world->creatures[i].dna = (uint32_t)rand() | ((uint32_t)rand() << 16);
+        world->creatures[i].genome = (uint32_t)rand() | ((uint32_t)rand() << 16);
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].birthTick = game->tick;
         world->creatures[i].alive = true;
@@ -130,9 +130,9 @@ void initWorld(Game* game, World* world) {
 }
 
 void setColorForCreature(Creature* creature) {
-    float r = ((creature->dna & 0xFF0000) >> 16) / 255.0f;
-    float g = ((creature->dna & 0x00FF00) >> 8) / 255.0f;
-    float b = (creature->dna & 0x0000FF) / 255.0f;
+    float r = ((creature->genome & 0xFF0000) >> 16) / 255.0f;
+    float g = ((creature->genome & 0x00FF00) >> 8) / 255.0f;
+    float b = (creature->genome & 0x0000FF) / 255.0f;
     glColor3f(r, g, b);
 }
 
@@ -227,22 +227,22 @@ void display() {
 
 float probabilityMove(Creature* creature) {
     // divides by 63.0f because the bitmask 0x3F extracts the lower 6 bits of the adn field, which can represent values in the range [0, 63]. Dividing by 63.0f normalizes this value to the range [0.0, 1.0].
-    return ((creature->dna & 0x3F) / 63.0f);
+    return ((creature->genome & 0x3F) / 63.0f);
 }
 
 float probabilityReproduce(Creature* creature) {
     // divides by 127.0f because the bitmask 0xFE bits 1 to 7.
-    return ((creature->dna & 0xFE) >> 1) / 127.0f;
+    return ((creature->genome & 0xFE) >> 1) / 127.0f;
 }
 
 Energy hungerThreshold(Creature* creature) {
     // We extract hunger threshold from the adn field. The bitmask 0xFF extracts the lower 8 bits of the adn field, which can represent values in the range [0, 255]. This value is then used to determine the hunger threshold for the creature.
-    return (creature->dna >> 6) & 0xFF;
+    return (creature->genome >> 6) & 0xFF;
 }
 
 Tick reproductionAge(Creature* creature) {
     // We extract reproduction age from the adn field. The bitmask 0xFF extracts the lower 8 bits of the adn field, which can represent values in the range [0, 255]. This value is then used to determine the reproduction age for the creature.
-    return ((creature->dna >> 14) & 0xFF) % 101;
+    return ((creature->genome >> 14) & 0xFF) % 101;
 }
 
 Action decideAction(World* world, Creature* creature) {
@@ -336,7 +336,7 @@ SurroundingLocation surroundingLocation(World* world, int x, int y) {
 
 void cloneInto(Creature* parent, Creature* clone, PointI location) {
     clone->location = location;
-    clone->dna = parent->dna; // Clone the DNA
+    clone->genome = parent->genome; // Clone the DNA
     clone->energy = parent->energy / 2; // Half the energy for the clone
     clone->alive = true;
     clone->birthTick = game->tick;
@@ -413,7 +413,7 @@ void updateCreature(Creature* creature) {
         }
         
         #ifdef DEBUG_ENABLED
-            printf("Creature %d action=%d energy=%d\n", creature->dna, action , creature->energy);
+            printf("Creature %d action=%d energy=%d\n", creature->genome, action , creature->energy);
         #endif
         
         if (creature->energy <= 0) {
@@ -421,7 +421,7 @@ void updateCreature(Creature* creature) {
             creature->deathTick = game->tick; // Store the tick when the creature died
             world->alivec--;
             #ifdef TRACE_ENABLED
-                printf("Creature %d died at tick %d\n", creature->dna, game->tick);
+                printf("Creature %d died at tick %d\n", creature->genome, game->tick);
             #endif
         }
     }
