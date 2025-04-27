@@ -15,6 +15,7 @@ typedef uint32_t Energy;
 #define ENERGY_COST_NONE 1
 #define ENERGY_COST_EAT 2
 #define ENERGY_COST_MOVE 10
+#define ENERGY_COST_REPRODUCE 5
 #define REPRODUCTION_ENERGY_TRHESHOLD 1000
 #define REPRODUCTION_AGE 100
 #define INITIAL_CREATURES_COUNT 1000
@@ -313,8 +314,11 @@ void cloneInto(Creature* parent, Creature* clone, PointI location) {
 }
 
 void reproduce(World* world, Creature* creature) {
-    if (world->creaturesc+2 >= game->maxCreaturesCount) return;
-    if (creature->energy < REPRODUCTION_ENERGY_TRHESHOLD) return;
+    if (world->creaturesc+2 >= game->maxCreaturesCount) {
+        // If we don't decrease energy, creatures that reached maturity in an overpopulated world will be immortal.
+        decreaseEnergy(creature, ENERGY_COST_REPRODUCE);
+        return;
+    } 
 
     PointI l = creature->location;
 
