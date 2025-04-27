@@ -67,6 +67,7 @@ Cell** buffer; // Buffer for cells
 typedef struct {
     Tick tick;
     bool running;
+    bool ended;
     int initalCreaturesCount;
     int maxCreaturesCount;
     bool displayInformation;
@@ -147,7 +148,7 @@ void renderCreature(Creature* creature) {
     glEnd();
 }
 
-void displayText(const char* text, float x, float y) {
+void displayText(const char* text, void* font, float x, float y) {
     glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
     glRasterPos2f(x, y); // Set position for the text
     for (const char* c = text; *c != '\0'; ++c) {
@@ -155,55 +156,24 @@ void displayText(const char* text, float x, float y) {
     }
 }
 
-void displayPausedText() {
+void displayBanner(const char* text) {
     glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
 
     // Calculate the center position for the text
     float centerX = world->size.width / 2.0f - 2.5f; // Adjust for text width
     float centerY = world->size.height / 2.0f;
 
-    glRasterPos2f(centerX, centerY); // Set position near the center
-
-    const char* pausedText = "PAUSED";
-    for (const char* c = pausedText; *c != '\0'; ++c) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c); // Render each character
-    }
-}
-
-void displayPopulation() {
-    char populationText[50];
-    snprintf(populationText, sizeof(populationText), "Population: %d", world->alivec);
-    displayText(populationText, 40.0f, 1.0f);
-}
-
-void displayTick() {
-    char tickText[50];
-    snprintf(tickText, sizeof(tickText), "Tick: %d", game->tick);
-    displayText(tickText, 10.0f, 1.0f);
-}
-
-void displayUpdateInterval() {
-    char fpsText[50];
-    snprintf(fpsText, sizeof(fpsText), "Update interval: %dms", game->updateInterval);
-    displayText(fpsText, 60.0f, 1.0f);
-}
-
-void displayReproductions() {
-    char text[50];
-    snprintf(text, sizeof(text), "Reproductions: %d", world->reproductionc);
-    displayText(text, 90.0f, 1.0f);
-}
-
-void displaySelection() {
-    if (game->selection != NULL) {
-        char text[50];
-        snprintf(text, sizeof(text), "Creature: age=%d, energy=%d", creatureAge(game->selection), game->selection->energy);
-        displayText(text, 120.0f, 1.0f);
-    }
+    displayText(text, GLUT_BITMAP_HELVETICA_18, centerX, centerY);
 }
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
+
+    if (game->ended) {
+        displayBanner("GAME OVER");
+        glutSwapBuffers();
+        return;
+    }
 
     for (int i = 0; i < world->creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
@@ -213,15 +183,16 @@ void display() {
     }
 
     if (game->displayInformation) {
-        displayTick();
-        displayPopulation();
-        displayUpdateInterval();
-        displayReproductions();
+        char information[100];
+        if (game->selection != NULL) {
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Creature: (age %d energy: %d)", game->tick, game->updateInterval, world->alivec, creatureAge(game->selection), game->selection->energy);
+        } else {
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d", game->tick, game->updateInterval, world->alivec);
+        }
+        displayText(information, GLUT_BITMAP_HELVETICA_12, 1.0f, 1.0f);
     }
-    if (game->selection != NULL) {
-        displaySelection();
-    }
-    if (!game->running) displayPausedText();
+
+    if (!game->running) displayBanner("PAUSED");
 
     glutSwapBuffers();
 }
@@ -443,24 +414,21 @@ void scheduleUpdate() {
 void update(int value) {
     game->timerScheduled = false; // Reset the timer scheduled flag
 
-    if (!game->running) {
-        glutPostRedisplay(); // Request display update
-        return;
-    }
+    if (game->running) {
 
-    game->tick++;
+        game->tick++;
 
-    #ifdef TRACE_ENABLED
-        printf("tick %d\n", game->tick);
-    #endif
+        #ifdef TRACE_ENABLED
+            printf("tick %d\n", game->tick);
+        #endif
 
-    for (int i = 0; i < world->creaturesc; ++i) {
-        updateCreature(&world->creatures[i]);
-    }
+        for (int i = 0; i < world->creaturesc; ++i) {
+            updateCreature(&world->creatures[i]);
+        }
 
-    if (world->alivec == 0) {
-        game->running = false; // Stop the game if all creatures are dead
-        glutLeaveMainLoop(); // Exit the main loop if game is not running
+        if (world->alivec == 0) {
+            game->ended = true;
+        }
     }
 
     glutPostRedisplay(); // Request display update
@@ -475,9 +443,6 @@ void handleKeypress(unsigned char key, int x, int y) {
         case 'p': // Pause the game
         case 'P':
             game->running = !game->running; // Toggle the running state
-            if (game->running) {
-                scheduleUpdate();
-            }
             break;
         case 'i':
         case 'I':
@@ -516,7 +481,6 @@ void selectCreature(int x, int y) {
 void handleMouseClick(int button, int state, int x, int y) {
     if (state == GLUT_DOWN) { // Check if the mouse button was pressed
         if (button == GLUT_LEFT_BUTTON) {
-            printf("Mouse click at (%d, %d)\n", x, y);
             selectCreature(x, y);
         }
     }
@@ -548,6 +512,7 @@ int main(int argc, char** argv) {
         .maxCreaturesCount = MAX_CREATURES,
         .initalCreaturesCount = initialCreaturesCount > MAX_CREATURES ? MAX_CREATURES : initialCreaturesCount,
         .running = false,
+        .ended = false,
         .displayInformation = true,
         .updateInterval = 100,
         .timerScheduled = false,
