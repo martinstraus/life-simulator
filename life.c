@@ -21,6 +21,7 @@ typedef uint32_t Energy;
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 #define SPEED_DELTA 10
+#define MUTATION_PROBABILITY 0.01f
 //#define DEBUG_ENABLED
 //#define TRACE_ENABLED
 
@@ -308,7 +309,11 @@ SurroundingLocation surroundingLocation(World* world, int x, int y) {
 
 void cloneInto(Creature* parent, Creature* clone, PointI location) {
     clone->location = location;
-    clone->genome = parent->genome; // Clone the DNA
+    if (rand() / (float)RAND_MAX < MUTATION_PROBABILITY) {
+        clone->genome = parent->genome ^ (1 << (rand() % 32)); // Clone the DNA with one bit flipped
+    } else {
+        clone->genome = parent->genome; // Clone the DNA without mutation
+    }
     clone->energy = parent->energy / 2; // Half the energy for the clone
     clone->alive = true;
     clone->birthTick = game->tick;
