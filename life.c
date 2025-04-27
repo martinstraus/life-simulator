@@ -17,7 +17,6 @@ typedef uint32_t Energy;
 #define ENERGY_COST_MOVE 10
 #define ENERGY_COST_REPRODUCE 5
 #define REPRODUCTION_ENERGY_TRHESHOLD 1000
-#define REPRODUCTION_AGE 100
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 #define SPEED_DELTA 10
@@ -241,6 +240,11 @@ Energy hungerThreshold(Creature* creature) {
     return (creature->dna >> 6) & 0xFF;
 }
 
+Tick reproductionAge(Creature* creature) {
+    // We extract reproduction age from the adn field. The bitmask 0xFF extracts the lower 8 bits of the adn field, which can represent values in the range [0, 255]. This value is then used to determine the reproduction age for the creature.
+    return ((creature->dna >> 14) & 0xFF) % 101;
+}
+
 Action decideAction(World* world, Creature* creature) {
     bool isHungry = creature->energy < hungerThreshold(creature);
     if (isHungry) {
@@ -248,7 +252,7 @@ Action decideAction(World* world, Creature* creature) {
         if (theresFoodInLocation) return EAT;
     }
     Tick age = creatureAge(creature);
-    if (age > REPRODUCTION_AGE && creature->energy >= REPRODUCTION_ENERGY_TRHESHOLD) {
+    if (age > reproductionAge(creature) && creature->energy >= REPRODUCTION_ENERGY_TRHESHOLD) {
         float reproduce = probabilityReproduce(creature);
         float r = (float)rand() / RAND_MAX;
         if (r < reproduce) {
