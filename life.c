@@ -63,6 +63,7 @@ typedef struct {
     unsigned int creaturesc;
     unsigned int alivec; // Number of alive creatures
     unsigned int reproductionc; // Number of reproductions
+    unsigned int mutations;
 } World;
 
 typedef struct {
@@ -224,9 +225,9 @@ void display() {
     if (game->displayInformation) {
         char information[100];
         if (game->selection != NULL) {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Creature: (age %d energy: %d)", game->tick, game->updateInterval, world->alivec, creatureAge(game->selection), game->selection->energy);
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Creature: (age %d energy: %d)", game->tick, game->updateInterval, world->alivec, world->mutations, creatureAge(game->selection), game->selection->energy);
         } else {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d", game->tick, game->updateInterval, world->alivec);
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d", game->tick, game->updateInterval, world->alivec, world->mutations);
         }
         displayText(information, GLUT_BITMAP_HELVETICA_12, 1.0f, 1.0f);
     }
@@ -345,10 +346,11 @@ SurroundingLocation surroundingLocation(World* world, int x, int y) {
     return location;
 }
 
-void cloneInto(Creature* parent, Creature* clone, PointI location) {
+void cloneInto(World* world, Creature* parent, Creature* clone, PointI location) {
     clone->location = location;
     if (rand() / (float)RAND_MAX < MUTATION_PROBABILITY) {
         clone->genome = parent->genome ^ (1 << (rand() % 32)); // Clone the DNA with one bit flipped
+        world->mutations++;
     } else {
         clone->genome = parent->genome; // Clone the DNA without mutation
     }
@@ -395,9 +397,9 @@ void reproduce(World* world, Creature* creature) {
         PointI l2 = selected[r2];
 
 
-        cloneInto(creature, &(world->creatures[world->creaturesc++]), l1);
+        cloneInto(world, creature, &(world->creatures[world->creaturesc++]), l1);
         world->alivec++;
-        cloneInto(creature, &(world->creatures[world->creaturesc++]), l2);
+        cloneInto(world, creature, &(world->creatures[world->creaturesc++]), l2);
         world->alivec++;
 
         // This should be improved. The creature does not actually die.
