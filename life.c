@@ -541,10 +541,10 @@ void usage() {
 
 Parameters parseParameters(int argc, char** argv) {
     return (Parameters) { 
-        .seed = argc > 0  ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL), 
-        .initialCreaturesCount = argc > 1 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT, 
-        .useGenePool = argc > 2 ? (bool)atoi(argv[3]) : USE_GENE_POOL, 
-        .genePoolSize = argc > 3 ? atoi(argv[4]) : GENE_POOL_SIZE 
+        .seed = argc > 2  ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL), 
+        .initialCreaturesCount = argc > 3 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT, 
+        .useGenePool = argc > 4 ? (bool)atoi(argv[3]) : USE_GENE_POOL, 
+        .genePoolSize = argc > 5 ? atoi(argv[4]) : GENE_POOL_SIZE 
     };
 }
 
