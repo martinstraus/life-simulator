@@ -22,6 +22,8 @@ typedef uint32_t Energy;
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 #define SPEED_DELTA 10
 #define MUTATION_PROBABILITY 0.01f
+#define GENE_POOL_SIZE 3
+#define USE_GENE_POOL true
 //#define DEBUG_ENABLED
 //#define TRACE_ENABLED
 
@@ -63,7 +65,19 @@ typedef struct {
     unsigned int reproductionc; // Number of reproductions
 } World;
 
+typedef struct {
+    Genome* genomes;
+    unsigned int size;
+} GenePool;
+
 Cell** buffer; // Buffer for cells
+
+typedef struct {
+    int seed;
+    unsigned int initialCreaturesCount;
+    bool useGenePool;
+    unsigned int genePoolSize;
+} Parameters;
 
 typedef struct {
     Tick tick;
@@ -75,6 +89,8 @@ typedef struct {
     int updateInterval;
     bool timerScheduled;
     Creature* selection;
+    bool useGenePool;
+    GenePool genePool;
 } Game;
 
 World* world;
@@ -111,13 +127,26 @@ PointI randomUnoccupiedCell(World* world) {
     return point;
 }
 
+Genome randomGenome() {
+    return (uint32_t)rand() | ((uint32_t)rand() << 16);
+}
+
+Genome selectGenome(Game* game) {
+    if (game->useGenePool) {
+        int r = rand() % game->genePool.size;
+        return game->genePool.genomes[r];
+    } else {
+        return randomGenome();
+    }
+}
+
 void initCreatures(Game* game, World* world) {
     world->creatures = (Creature*)malloc(game->maxCreaturesCount * sizeof(Creature));
     for (unsigned int i = 0; i < game->initalCreaturesCount; ++i) {
         PointI location = randomUnoccupiedCell(world);
         world->creatures[i].location.x = location.x;
         world->creatures[i].location.y = location.y;
-        world->creatures[i].genome = (uint32_t)rand() | ((uint32_t)rand() << 16);
+        world->creatures[i].genome = selectGenome(game);
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].birthTick = game->tick;
         world->creatures[i].alive = true;
@@ -125,6 +154,15 @@ void initCreatures(Game* game, World* world) {
     }
     world->creaturesc = game->initalCreaturesCount;
     world->alivec = world->creaturesc;
+}
+
+void initGenePool(Game *game) {
+    if (game->useGenePool) {
+        game->genePool.genomes = (Genome*)malloc(game->genePool.size * sizeof(Genome));
+        for (int i = 0; i < game->genePool.size; ++i) {
+            game->genePool.genomes[i] = randomGenome();
+        }
+    }
 }
 
 void initWorld(Game* game, World* world) {
@@ -492,36 +530,46 @@ void handleMouseClick(int button, int state, int x, int y) {
 }
 
 void usage() {
-    printf("Usage: life [seed] [initial creatures count]\n");
-    printf("\t-seed: Seed for random number generation (default: current time)\n");
-    printf("\t-initial creatures count: Initial number of creatures (default: %d)\n", INITIAL_CREATURES_COUNT);
+    printf("Usage: life [seed] [initial creatures count] [use gene pool] [gene pool size]\n");
+    printf("\t-seed (number): Seed for random number generation (default: current time)\n");
+    printf("\t-initial creatures count (number > 0): Initial number of creatures (default: %d)\n", INITIAL_CREATURES_COUNT);
+    printf("\t-use gene pool (0|1): Use a gene pool instead of random genomes for each creature (default: %d)\n", USE_GENE_POOL);
+    printf("\t-gene pool size (number > 0): Size of the gene pool (default: %d)\n", GENE_POOL_SIZE);
+}
+
+Parameters parseParameters(int argc, char** argv) {
+    return (Parameters) { 
+        .seed = argc > 0  ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL), 
+        .initialCreaturesCount = argc > 1 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT, 
+        .useGenePool = argc > 2 ? (bool)atoi(argv[3]) : USE_GENE_POOL, 
+        .genePoolSize = argc > 3 ? atoi(argv[4]) : GENE_POOL_SIZE 
+    };
 }
 
 int main(int argc, char** argv) {
-    if (argc > 1) {
-        if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
-            usage();
-            return 0;
-        }
+    if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+        usage();
+        return 0;
     }
-    unsigned int seed = argc > 1 ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL);
+    Parameters params = parseParameters(argc, argv);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
     SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
-
-    int initialCreaturesCount = argc > 2 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT;
+    
     game = &(Game) { 
         .tick = 0,
         .maxCreaturesCount = MAX_CREATURES,
-        .initalCreaturesCount = initialCreaturesCount > MAX_CREATURES ? MAX_CREATURES : initialCreaturesCount,
+        .initalCreaturesCount = params.initialCreaturesCount <= MAX_CREATURES ? params.initialCreaturesCount : MAX_CREATURES,
         .running = false,
         .ended = false,
         .displayInformation = true,
         .updateInterval = 100,
         .timerScheduled = false,
-        .selection = NULL
+        .selection = NULL,
+        .useGenePool = params.useGenePool,
+        .genePool = (GenePool) { .genomes = NULL, .size = params.genePoolSize }
     };
     world = &(World) { 
         .size = (SizeI) {
@@ -530,6 +578,7 @@ int main(int argc, char** argv) {
          }, 
         .creaturesc = INITIAL_CREATURES_COUNT
     };
+    initGenePool(game);
     initWorld(game, world);
     game->running = true;
     
