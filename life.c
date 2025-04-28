@@ -49,6 +49,7 @@ typedef struct {
     bool alive;
     Tick birthTick; // Tick when the creature was born
     Tick deathTick; // Tick when the creature died
+    int generation; // How many reproductions it take to reach this creature
 } Creature;
 
 typedef struct {
@@ -225,7 +226,7 @@ void display() {
     if (game->displayInformation) {
         char information[100];
         if (game->selection != NULL) {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Creature: (age %d energy: %d)", game->tick, game->updateInterval, world->alivec, world->mutations, creatureAge(game->selection), game->selection->energy);
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Creature: (age %d energy: %d generation: %d)", game->tick, game->updateInterval, world->alivec, world->mutations, creatureAge(game->selection), game->selection->energy, game->selection->generation);
         } else {
             snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d", game->tick, game->updateInterval, world->alivec, world->mutations);
         }
@@ -354,6 +355,7 @@ void cloneInto(World* world, Creature* parent, Creature* clone, PointI location)
     } else {
         clone->genome = parent->genome; // Clone the DNA without mutation
     }
+    clone->generation = parent->generation + 1;
     clone->energy = parent->energy / 2; // Half the energy for the clone
     clone->alive = true;
     clone->birthTick = game->tick;
