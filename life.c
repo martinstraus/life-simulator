@@ -408,6 +408,9 @@ void reproduce(World* world, Creature* creature) {
         creature->alive = false;
         world->alivec--;
         world->reproductionc += 2;
+        if (game->selection == creature) {
+            game->selection = NULL; // Deselect the creature if it dies
+        }
     }
 }
 
@@ -439,6 +442,9 @@ void updateCreature(Creature* creature) {
             creature->alive = false; // Mark as dead if energy is depleted
             creature->deathTick = game->tick; // Store the tick when the creature died
             world->alivec--;
+            if (game->selection == creature) {
+                game->selection = NULL; // Deselect the creature if it dies
+            }
             #ifdef TRACE_ENABLED
                 printf("Creature %d died at tick %d\n", creature->genome, game->tick);
             #endif
