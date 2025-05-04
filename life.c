@@ -556,6 +556,18 @@ Parameters parseParameters(int argc, char** argv) {
     };
 }
 
+void reshape(int width, int height) {
+    glViewport(0, 0, width, height);
+
+    float worldWidth = width / CREATURE_SIZE.width;
+    float worldHeight = height / CREATURE_SIZE.height;
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, worldWidth, 0, worldHeight, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+}
+
 int main(int argc, char** argv) {
     if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
         usage();
@@ -595,12 +607,9 @@ int main(int argc, char** argv) {
     glutInitWindowSize(screenSize.width, screenSize.height);
     glutCreateWindow("Life Simulator");
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, world->size.width, 0, world->size.height, -1, 1); // Set orthographic projection
-    glMatrixMode(GL_MODELVIEW);
-
     glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+
     glutKeyboardFunc(handleKeypress); // Register the keyboard callback
     glutMouseFunc(handleMouseClick); // Register the mouse callback
     scheduleUpdate();
