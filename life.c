@@ -546,6 +546,20 @@ void moveCamera(int dx, int dy) {
     scheduleUpdate();
 }
 
+void zoomCamera(float zoomFactor) {
+    view->zoom *= zoomFactor;
+    updateCoordinates(view);
+    scheduleUpdate();
+}
+
+void zoomIn() {
+    zoomCamera(0.9f);
+}
+
+void zoomOut() {
+    zoomCamera(1.1f);
+}
+
 void handleKeypress(unsigned char key, int x, int y) {
     switch (key) {
         case 27: // Escape key
@@ -568,12 +582,10 @@ void handleKeypress(unsigned char key, int x, int y) {
             scheduleUpdate();
             break;
         case '+':
-            view->zoom *= 0.9f;
-            updateCoordinates(view);
+            zoomIn();
             break;
         case '-':
-            view->zoom *= 1.1f;
-            updateCoordinates(view);
+            zoomOut();
             break;
     }
 }
@@ -619,6 +631,14 @@ void handleMouseClick(int button, int state, int x, int y) {
         if (button == GLUT_LEFT_BUTTON) {
             selectCreature(x, y);
         }
+    }
+}
+
+void handleMouseWheel(int wheel, int direction, int x, int y) {
+    if (direction > 0) {
+        zoomIn();
+    } else {
+        zoomOut();
     }
 }
 
@@ -704,6 +724,7 @@ int main(int argc, char** argv) {
     glutKeyboardFunc(handleKeypress); // Register the keyboard callback
     glutSpecialFunc(handleSpecialKeys);
     glutMouseFunc(handleMouseClick); // Register the mouse callback
+    glutMouseWheelFunc(handleMouseWheel); // Register the mouse wheel callback
     scheduleUpdate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
