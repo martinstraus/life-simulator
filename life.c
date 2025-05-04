@@ -95,8 +95,13 @@ typedef struct {
     GenePool genePool;
 } Game;
 
+typedef struct {
+    PointF position; // Always reffers to the center of the screen.
+} Camera;
+
 World* world;
 Game* game;
+Camera* camera;
 
 Tick creatureAge(Creature* creature) {
     return creature->alive ? game->tick - creature->birthTick : creature->deathTick - creature->birthTick;
@@ -559,12 +564,14 @@ Parameters parseParameters(int argc, char** argv) {
 void reshape(int width, int height) {
     glViewport(0, 0, width, height);
 
-    float worldWidth = width / CREATURE_SIZE.width;
-    float worldHeight = height / CREATURE_SIZE.height;
+    float worldWidth = width / CREATURE_SIZE.width; // how many creatures fit in the width of the screen.
+    float worldHeight = height / CREATURE_SIZE.height; // how many creatures fit in the height of the screen.
+    float halfWidth = worldWidth / 2.0f;
+    float halfHeight = worldHeight / 2.0f;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, worldWidth, 0, worldHeight, -1, 1);
+    glOrtho(camera->position.x - halfWidth, camera->position.x + halfWidth, camera->position.y - halfHeight, camera->position.y + halfHeight, -1, 1);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -593,6 +600,7 @@ int main(int argc, char** argv) {
         .useGenePool = params.useGenePool,
         .genePool = (GenePool) { .genomes = NULL, .size = params.genePoolSize }
     };
+
     world = &(World) { 
         .size = (SizeI) {
             .width = screenSize.width / CREATURE_SIZE.width,
@@ -600,6 +608,15 @@ int main(int argc, char** argv) {
          }, 
         .creaturesc = INITIAL_CREATURES_COUNT
     };
+
+    // The camera is initialized to the center of the world.
+    camera = &(Camera) {
+        .position = (PointF) {
+            .x = world->size.width / 2.0f,
+            .y = world->size.height / 2.0f
+        }
+    };
+
     initGenePool(game);
     initWorld(game, world);
     game->running = true;
