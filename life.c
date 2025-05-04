@@ -642,10 +642,11 @@ void handleMouseWheel(int wheel, int direction, int x, int y) {
 
 void usage() {
     printf("Usage: life [seed] [initial creatures count] [use gene pool] [gene pool size]\n");
-    printf("\t-seed (number): Seed for random number generation (default: current time)\n");
-    printf("\t-initial creatures count (number > 0): Initial number of creatures (default: %d)\n", INITIAL_CREATURES_COUNT);
-    printf("\t-use gene pool (0|1): Use a gene pool instead of random genomes for each creature (default: %d)\n", USE_GENE_POOL);
-    printf("\t-gene pool size (number > 0): Size of the gene pool (default: %d)\n", GENE_POOL_SIZE);
+    printf("\t'-h' or '--help': get command line help.\n");
+    printf("\t'-s' or '--seed': seed to use for randomization; the next parameter must be a positive integer number.\n");
+    printf("\t'-c' or '--creatures': initial creatures count; the next parameter must be a positive integer number. Default: %d\n", INITIAL_CREATURES_COUNT);
+    printf("\t'-g' or '--genepool': use a gene pool instead of random DNA generation for each creature.\n");
+    printf("\t'-p' or '--poolsize': the number of DNAs in the gene pool; the next parameter must be a positive integer number. Default: %d.\n", GENE_POOL_SIZE);
 }
 
 bool isParam(char* value, const char* shortParam, const char* longParam) {
