@@ -102,6 +102,7 @@ typedef struct {
     struct {
         PointF position; // Always reffers to the center of the screen.
     } camera;
+    float zoom; // Zoom factor
 } GameView;
 
 World* world;
@@ -514,8 +515,8 @@ void update(int value) {
 void updateCoordinates(GameView* view) {
     glViewport(0, 0, view->screen.size.width, view->screen.size.height); // Set the viewport to the window size
 
-    float worldWidth = view->screen.size.width / CREATURE_SIZE.width; // how many creatures fit in the width of the screen.
-    float worldHeight = view->screen.size.height / CREATURE_SIZE.height; // how many creatures fit in the height of the screen.
+    float worldWidth = (view->screen.size.width / CREATURE_SIZE.width) * view->zoom; // how many creatures fit in the width of the screen.
+    float worldHeight = (view->screen.size.height / CREATURE_SIZE.height) * view->zoom; // how many creatures fit in the height of the screen.
     float halfWidth = worldWidth / 2.0f;
     float halfHeight = worldHeight / 2.0f;
 
@@ -558,13 +559,21 @@ void handleKeypress(unsigned char key, int x, int y) {
         case 'I':
             game->displayInformation = !game->displayInformation;
             break;
-        case '+':
+        case 'f': // 'f' for 'fast'
             game->updateInterval = game->updateInterval > SPEED_DELTA ? game->updateInterval - SPEED_DELTA : SPEED_DELTA; // Increase speed
             scheduleUpdate();
             break;
-        case '-':
+        case 's': // 's' for 'slow'
             game->updateInterval += SPEED_DELTA;
             scheduleUpdate();
+            break;
+        case '+':
+            view->zoom *= 0.9f;
+            updateCoordinates(view);
+            break;
+        case '-':
+            view->zoom *= 1.1f;
+            updateCoordinates(view);
             break;
     }
 }
@@ -678,7 +687,8 @@ int main(int argc, char** argv) {
                 .x = world->size.width / 2.0f,
                 .y = world->size.height / 2.0f
             }
-        }
+        },
+        .zoom = 1.0f
     };
 
     initGenePool(game);
