@@ -11,6 +11,16 @@ Life simulator
 - Slow down: press 's'.
 - Zoom in or out: press '+' or '-', or scroll the mouse wheel.
 
+### Run
+
+Run with default settings:
+
+    ./life
+
+Get help:
+
+    ./life -h
+
 ## Building on MacOS
 
     brew install glew glfw glm mesa
