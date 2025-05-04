@@ -8,7 +8,6 @@
 typedef uint32_t Genome;
 typedef uint32_t Energy;
 
-#define MAX_CREATURES 5000
 #define ENERGY_BASE 1000
 #define ENERGY_MAX 10000
 #define CELL_FOOD_MAX 100
@@ -62,6 +61,7 @@ typedef struct {
     Cell** cells; // 2D array of cells; convention: cells[x][y]
     Creature* creatures;
     unsigned int creaturesc;
+    unsigned int maxPopulation;
     unsigned int alivec; // Number of alive creatures
     unsigned int reproductionc; // Number of reproductions
     unsigned int mutations;
@@ -85,8 +85,6 @@ typedef struct {
     Tick tick;
     bool running;
     bool ended;
-    int initalCreaturesCount;
-    int maxCreaturesCount;
     bool displayInformation;
     int updateInterval;
     bool timerScheduled;
@@ -154,8 +152,8 @@ Genome selectGenome(Game* game) {
 }
 
 void initCreatures(Game* game, World* world) {
-    world->creatures = (Creature*)malloc(game->maxCreaturesCount * sizeof(Creature));
-    for (unsigned int i = 0; i < game->initalCreaturesCount; ++i) {
+    world->creatures = (Creature*)malloc(world->maxPopulation * sizeof(Creature));
+    for (unsigned int i = 0; i < world->creaturesc; ++i) {
         PointI location = randomUnoccupiedCell(world);
         world->creatures[i].location.x = location.x;
         world->creatures[i].location.y = location.y;
@@ -165,7 +163,6 @@ void initCreatures(Game* game, World* world) {
         world->creatures[i].alive = true;
         world->cells[location.x][location.y].creature = &world->creatures[i]; // Assign the creature to the cell
     }
-    world->creaturesc = game->initalCreaturesCount;
     world->alivec = world->creaturesc;
 }
 
@@ -386,7 +383,7 @@ void cloneInto(World* world, Creature* parent, Creature* clone, PointI location)
 }
 
 void reproduce(World* world, Creature* creature) {
-    if (world->creaturesc+2 >= game->maxCreaturesCount) {
+    if (world->creaturesc+2 >= world->maxPopulation) {
         // If we don't decrease energy, creatures that reached maturity in an overpopulated world will be immortal.
         decreaseEnergy(creature, ENERGY_COST_REPRODUCE);
         return;
@@ -671,11 +668,10 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
     SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
+    SizeI worldSize = (SizeI) { .width = screenSize.width / CREATURE_SIZE.width, .height = screenSize.height / CREATURE_SIZE.height };
     
     game = &(Game) { 
         .tick = 0,
-        .maxCreaturesCount = MAX_CREATURES,
-        .initalCreaturesCount = params.initialCreaturesCount <= MAX_CREATURES ? params.initialCreaturesCount : MAX_CREATURES,
         .running = false,
         .ended = false,
         .displayInformation = true,
@@ -686,12 +682,11 @@ int main(int argc, char** argv) {
         .genePool = (GenePool) { .genomes = NULL, .size = params.genePoolSize }
     };
 
+    unsigned int maxPopulation = worldSize.width * worldSize.height;
     world = &(World) { 
-        .size = (SizeI) {
-            .width = screenSize.width / CREATURE_SIZE.width,
-            .height = screenSize.height / CREATURE_SIZE.height
-         }, 
-        .creaturesc = INITIAL_CREATURES_COUNT
+        .size = worldSize,
+        .maxPopulation = maxPopulation,
+        .creaturesc = params.initialCreaturesCount <= maxPopulation ? params.initialCreaturesCount : maxPopulation
     };
 
     // The camera is initialized to the center of the world.
