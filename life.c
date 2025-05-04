@@ -607,10 +607,10 @@ void handleSpecialKeys(int key, int x, int y) {
             moveCamera(0, -1.0f * view->zoom);
             break;
         case GLUT_KEY_LEFT:
-            moveCamera(1.0f * view->zoom, 0.0f);
+            moveCamera(-1.0f * view->zoom, 0.0f);
             break;
         case GLUT_KEY_RIGHT:
-            moveCamera(-1.0f * view->zoom, 0.0f);
+            moveCamera(1.0f * view->zoom, 0.0f);
             break;
     }
 }
