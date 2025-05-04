@@ -96,12 +96,17 @@ typedef struct {
 } Game;
 
 typedef struct {
-    PointF position; // Always reffers to the center of the screen.
-} Camera;
+    struct {
+        SizeF size;
+    } screen;
+    struct {
+        PointF position; // Always reffers to the center of the screen.
+    } camera;
+} GameView;
 
 World* world;
 Game* game;
-Camera* camera;
+GameView* view;
 
 Tick creatureAge(Creature* creature) {
     return creature->alive ? game->tick - creature->birthTick : creature->deathTick - creature->birthTick;
@@ -493,6 +498,40 @@ void update(int value) {
     scheduleUpdate(); // Schedule next update
 }
 
+void updateCoordinates(GameView* view) {
+    glViewport(0, 0, view->screen.size.width, view->screen.size.height); // Set the viewport to the window size
+
+    float worldWidth = view->screen.size.width / CREATURE_SIZE.width; // how many creatures fit in the width of the screen.
+    float worldHeight = view->screen.size.height / CREATURE_SIZE.height; // how many creatures fit in the height of the screen.
+    float halfWidth = worldWidth / 2.0f;
+    float halfHeight = worldHeight / 2.0f;
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(
+        view->camera.position.x - halfWidth, 
+        view->camera.position.x + halfWidth, 
+        view->camera.position.y - halfHeight, 
+        view->camera.position.y + halfHeight, 
+        -1, 
+        1
+    );
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void reshape(int width, int height) {
+    view->screen.size.width = width;
+    view->screen.size.height = height;
+    updateCoordinates(view);
+}
+
+void moveCamera(int dx, int dy) {
+    view->camera.position.x += dx;
+    view->camera.position.y += dy;
+    updateCoordinates(view);
+    scheduleUpdate();
+}
+
 void handleKeypress(unsigned char key, int x, int y) {
     switch (key) {
         case 27: // Escape key
@@ -513,6 +552,23 @@ void handleKeypress(unsigned char key, int x, int y) {
         case '-':
             game->updateInterval += SPEED_DELTA;
             scheduleUpdate();
+            break;
+    }
+}
+
+void handleSpecialKeys(int key, int x, int y) {
+    switch (key) {
+        case GLUT_KEY_UP:
+            moveCamera(0, 1.0f);
+            break;
+        case GLUT_KEY_DOWN:
+            moveCamera(0, -1.0f);
+            break;
+        case GLUT_KEY_LEFT:
+            moveCamera(1.0f, 0.0f);
+            break;
+        case GLUT_KEY_RIGHT:
+            moveCamera(-1.0f, 0.0f);
             break;
     }
 }
@@ -561,19 +617,6 @@ Parameters parseParameters(int argc, char** argv) {
     };
 }
 
-void reshape(int width, int height) {
-    glViewport(0, 0, width, height);
-
-    float worldWidth = width / CREATURE_SIZE.width; // how many creatures fit in the width of the screen.
-    float worldHeight = height / CREATURE_SIZE.height; // how many creatures fit in the height of the screen.
-    float halfWidth = worldWidth / 2.0f;
-    float halfHeight = worldHeight / 2.0f;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(camera->position.x - halfWidth, camera->position.x + halfWidth, camera->position.y - halfHeight, camera->position.y + halfHeight, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-}
 
 int main(int argc, char** argv) {
     if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
@@ -610,10 +653,18 @@ int main(int argc, char** argv) {
     };
 
     // The camera is initialized to the center of the world.
-    camera = &(Camera) {
-        .position = (PointF) {
-            .x = world->size.width / 2.0f,
-            .y = world->size.height / 2.0f
+    view = &(GameView) {
+        .screen = {
+            .size = (SizeF) {
+                .width = screenSize.width,
+                .height = screenSize.height
+            }
+        },
+        .camera = {
+            .position = (PointF) {
+                .x = world->size.width / 2.0f,
+                .y = world->size.height / 2.0f
+            }
         }
     };
 
@@ -628,6 +679,7 @@ int main(int argc, char** argv) {
     glutReshapeFunc(reshape);
 
     glutKeyboardFunc(handleKeypress); // Register the keyboard callback
+    glutSpecialFunc(handleSpecialKeys);
     glutMouseFunc(handleMouseClick); // Register the mouse callback
     scheduleUpdate();
 
