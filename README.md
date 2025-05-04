@@ -23,6 +23,7 @@ Life simulator
 * '-u' or '--update':  the update interval for animation; the next parameter must be a positive integer number.
 * '-w' or '--width': width of the world.
 * '-h' or '--height': height of the world.
+* '-m' or '--mutation': the probability of mutation when reproducing.
 
 #### Examples
 

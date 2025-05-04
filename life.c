@@ -84,6 +84,7 @@ typedef struct {
     int updateInterval;
     bool useWorldSize;
     SizeI worldSize;
+    float mutationProbability;
 } Parameters;
 
 typedef struct {
@@ -96,6 +97,7 @@ typedef struct {
     Creature* selection;
     bool useGenePool;
     GenePool genePool;
+    float mutationProbability;
 } Game;
 
 typedef struct {
@@ -379,7 +381,7 @@ SurroundingLocation surroundingLocation(World* world, int x, int y) {
 
 void cloneInto(World* world, Creature* parent, Creature* clone, PointI location) {
     clone->location = location;
-    if (rand() / (float)RAND_MAX < MUTATION_PROBABILITY) {
+    if (rand() / (float)RAND_MAX < game->mutationProbability) {
         clone->genome = parent->genome ^ (1 << (rand() % 32)); // Clone the DNA with one bit flipped
         world->mutations++;
     } else {
@@ -658,6 +660,7 @@ void usage() {
     printf("\t'-u' or '--update': the update interval for animation; the next parameter must be a positive integer number. Default: %d.\n", UPDATE_INTERVAL);
     printf("\t'-w' or '--width': width of the world.");
     printf("\t'-h' or '--height': height of the world.");
+    printf("\t'-m' or '--mutation': probability of mutation when reproducing.");
 }
 
 bool isParam(char* value, const char* shortParam, const char* longParam) {
@@ -671,7 +674,8 @@ Parameters parseParameters(int argc, char** argv) {
         .initialCreaturesCount = INITIAL_CREATURES_COUNT,
         .updateInterval = UPDATE_INTERVAL,
         .useWorldSize = false,
-        .worldSize = { .width = 0, .height = 0 }
+        .worldSize = { .width = 0, .height = 0 },
+        .mutationProbability = MUTATION_PROBABILITY
     };
     for (int i = 1; i < argc; ++i) {
         if (isParam(argv[i], "-s", "--seed") && i + 1 < argc) {
@@ -697,7 +701,10 @@ Parameters parseParameters(int argc, char** argv) {
         if (isParam(argv[i], "-h", "--height") && i + 1 < argc) {
             p.useWorldSize = true;
             p.worldSize.height = (unsigned int)atoi(argv[++i]);
-        }        
+        }
+        if (isParam(argv[i], "-m", "--mutation") && i + 1 < argc) {
+            p.mutationProbability = (unsigned int)atof(argv[++i]);
+        }
     }
     if ((p.worldSize.width != 0 && p.worldSize.height == 0) 
     || (p.worldSize.width == 0 && p.worldSize.height != 0)) {
@@ -735,7 +742,8 @@ int main(int argc, char** argv) {
         .timerScheduled = false,
         .selection = NULL,
         .useGenePool = params.useGenePool,
-        .genePool = (GenePool) { .genomes = NULL, .size = params.genePoolSize }
+        .genePool = (GenePool) { .genomes = NULL, .size = params.genePoolSize },
+        .mutationProbability = params.mutationProbability
     };
 
     unsigned int maxPopulation = worldSize.width * worldSize.height;
