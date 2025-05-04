@@ -23,6 +23,7 @@ typedef uint32_t Energy;
 #define MUTATION_PROBABILITY 0.01f
 #define GENE_POOL_SIZE 3
 #define USE_GENE_POOL true
+#define UPDATE_INTERVAL 100
 //#define DEBUG_ENABLED
 //#define TRACE_ENABLED
 
@@ -80,6 +81,7 @@ typedef struct {
     unsigned int initialCreaturesCount;
     bool useGenePool;
     unsigned int genePoolSize;
+    int updateInterval;
 } Parameters;
 
 typedef struct {
@@ -647,6 +649,7 @@ void usage() {
     printf("\t'-c' or '--creatures': initial creatures count; the next parameter must be a positive integer number. Default: %d\n", INITIAL_CREATURES_COUNT);
     printf("\t'-g' or '--genepool': use a gene pool instead of random DNA generation for each creature.\n");
     printf("\t'-p' or '--poolsize': the number of DNAs in the gene pool; the next parameter must be a positive integer number. Default: %d.\n", GENE_POOL_SIZE);
+    printf("\t'-u' or '--update': the update interval for animation; the next parameter must be a positive integer number. Default: %d.\n", UPDATE_INTERVAL);
 }
 
 bool isParam(char* value, const char* shortParam, const char* longParam) {
@@ -656,7 +659,9 @@ bool isParam(char* value, const char* shortParam, const char* longParam) {
 Parameters parseParameters(int argc, char** argv) {
     Parameters p = {
         .useSeed = false,
-        .useGenePool = false
+        .useGenePool = false,
+        .initialCreaturesCount = INITIAL_CREATURES_COUNT,
+        .updateInterval = UPDATE_INTERVAL
     };
     for (int i = 1; i < argc; ++i) {
         if (isParam(argv[i], "-s", "--seed") && i + 1 < argc) {
@@ -671,6 +676,9 @@ Parameters parseParameters(int argc, char** argv) {
         }
         if (isParam(argv[i], "-p", "--poolsize") && i + 1 < argc) {
             p.genePoolSize = (unsigned int)atoi(argv[++i]);
+        }
+        if (isParam(argv[i], "-u", "--update") && i + 1 < argc) {
+            p.updateInterval = (unsigned int)atoi(argv[++i]);
         }
     }   
     return p;
@@ -697,7 +705,7 @@ int main(int argc, char** argv) {
         .running = false,
         .ended = false,
         .displayInformation = true,
-        .updateInterval = 100,
+        .updateInterval = params.updateInterval,
         .timerScheduled = false,
         .selection = NULL,
         .useGenePool = params.useGenePool,
