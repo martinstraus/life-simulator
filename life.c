@@ -599,16 +599,16 @@ void handleKeypress(unsigned char key, int x, int y) {
 void handleSpecialKeys(int key, int x, int y) {
     switch (key) {
         case GLUT_KEY_UP:
-            moveCamera(0, 1.0f);
+            moveCamera(0, 1.0f * view->zoom);
             break;
         case GLUT_KEY_DOWN:
-            moveCamera(0, -1.0f);
+            moveCamera(0, -1.0f * view->zoom);
             break;
         case GLUT_KEY_LEFT:
-            moveCamera(1.0f, 0.0f);
+            moveCamera(1.0f * view->zoom, 0.0f);
             break;
         case GLUT_KEY_RIGHT:
-            moveCamera(-1.0f, 0.0f);
+            moveCamera(-1.0f * view->zoom, 0.0f);
             break;
     }
 }
