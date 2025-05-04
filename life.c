@@ -82,6 +82,8 @@ typedef struct {
     bool useGenePool;
     unsigned int genePoolSize;
     int updateInterval;
+    bool useWorldSize;
+    SizeI worldSize;
 } Parameters;
 
 typedef struct {
@@ -103,6 +105,10 @@ typedef struct {
     struct {
         PointF position; // Always reffers to the center of the screen.
     } camera;
+    struct {
+        PointI bottomLeft;
+        SizeI size;
+    } visibleWorld; 
     float zoom; // Zoom factor
 } GameView;
 
@@ -650,6 +656,8 @@ void usage() {
     printf("\t'-g' or '--genepool': use a gene pool instead of random DNA generation for each creature.\n");
     printf("\t'-p' or '--poolsize': the number of DNAs in the gene pool; the next parameter must be a positive integer number. Default: %d.\n", GENE_POOL_SIZE);
     printf("\t'-u' or '--update': the update interval for animation; the next parameter must be a positive integer number. Default: %d.\n", UPDATE_INTERVAL);
+    printf("\t'-w' or '--width': width of the world.");
+    printf("\t'-h' or '--height': height of the world.");
 }
 
 bool isParam(char* value, const char* shortParam, const char* longParam) {
@@ -661,7 +669,9 @@ Parameters parseParameters(int argc, char** argv) {
         .useSeed = false,
         .useGenePool = false,
         .initialCreaturesCount = INITIAL_CREATURES_COUNT,
-        .updateInterval = UPDATE_INTERVAL
+        .updateInterval = UPDATE_INTERVAL,
+        .useWorldSize = false,
+        .worldSize = { .width = 0, .height = 0 }
     };
     for (int i = 1; i < argc; ++i) {
         if (isParam(argv[i], "-s", "--seed") && i + 1 < argc) {
@@ -680,7 +690,21 @@ Parameters parseParameters(int argc, char** argv) {
         if (isParam(argv[i], "-u", "--update") && i + 1 < argc) {
             p.updateInterval = (unsigned int)atoi(argv[++i]);
         }
-    }   
+        if (isParam(argv[i], "-w", "--width") && i + 1 < argc) {
+            p.useWorldSize = true;
+            p.worldSize.width = (unsigned int)atoi(argv[++i]);
+        }
+        if (isParam(argv[i], "-h", "--height") && i + 1 < argc) {
+            p.useWorldSize = true;
+            p.worldSize.height = (unsigned int)atoi(argv[++i]);
+        }        
+    }
+    if ((p.worldSize.width != 0 && p.worldSize.height == 0) 
+    || (p.worldSize.width == 0 && p.worldSize.height != 0)) {
+        fprintf(stderr, "Error: world size must be specified in both dimensions.\n");
+        usage();
+        exit(1);
+    }
     return p;
 }
 
@@ -698,8 +722,10 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
     SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
-    SizeI worldSize = (SizeI) { .width = screenSize.width / CREATURE_SIZE.width, .height = screenSize.height / CREATURE_SIZE.height };
-    
+    SizeI worldSize = params.useWorldSize
+        ? params.worldSize
+        : (SizeI) { .width = screenSize.width / CREATURE_SIZE.width, .height = screenSize.height / CREATURE_SIZE.height };
+        
     game = &(Game) { 
         .tick = 0,
         .running = false,

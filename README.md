@@ -13,12 +13,18 @@ Life simulator
 
 ### Run
 
-Parameters:
+#### Parameters
+
 * '-h' or '--help': get command line help.
 * '-s' or '--seed': seed to use for randomization; the next parameter must be a positive integer number.
 * '-c' or '--creatures': initial creatures count; the next parameter must be a positive integer number.
 * '-g' or '--genepool': use a gene pool instead of random DNA generation for each creature.
 * '-p' or '--poolsize': the number of DNAs in the gene pool; the next parameter must be a positive integer number.
+* '-u' or '--update':  the update interval for animation; the next parameter must be a positive integer number.
+* '-w' or '--width': width of the world.
+* '-h' or '--height': height of the world.
+
+#### Examples
 
 Run with default settings:
 
