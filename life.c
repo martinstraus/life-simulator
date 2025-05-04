@@ -200,19 +200,32 @@ void renderCreature(Creature* creature) {
 }
 
 void displayText(const char* text, void* font, float x, float y) {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, view->screen.size.width, 0, view->screen.size.height);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
     glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
     glRasterPos2f(x, y); // Set position for the text
     for (const char* c = text; *c != '\0'; ++c) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); // Render each character
     }
+
+    // Restore previous projection and modelview
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 }
 
 void displayBanner(const char* text) {
-    glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
-
     // Calculate the center position for the text
-    float centerX = world->size.width / 2.0f - 2.5f; // Adjust for text width
-    float centerY = world->size.height / 2.0f;
+    float centerX = view->screen.size.width / 2.0f - 2.5f; // Adjust for text width
+    float centerY = view->screen.size.height / 2.0f;
 
     displayText(text, GLUT_BITMAP_HELVETICA_18, centerX, centerY);
 }
