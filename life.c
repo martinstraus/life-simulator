@@ -75,6 +75,7 @@ typedef struct {
 Cell** buffer; // Buffer for cells
 
 typedef struct {
+    bool useSeed;
     int seed;
     unsigned int initialCreaturesCount;
     bool useGenePool;
@@ -647,13 +648,31 @@ void usage() {
     printf("\t-gene pool size (number > 0): Size of the gene pool (default: %d)\n", GENE_POOL_SIZE);
 }
 
+bool isParam(char* value, const char* shortParam, const char* longParam) {
+    return strcmp(value, shortParam) == 0 || strcmp(value, longParam) == 0;
+}
+
 Parameters parseParameters(int argc, char** argv) {
-    return (Parameters) { 
-        .seed = argc > 2  ? (unsigned int)atoi(argv[1]) : (unsigned int)time(NULL), 
-        .initialCreaturesCount = argc > 3 ? atoi(argv[2]) : INITIAL_CREATURES_COUNT, 
-        .useGenePool = argc > 4 ? (bool)atoi(argv[3]) : USE_GENE_POOL, 
-        .genePoolSize = argc > 5 ? atoi(argv[4]) : GENE_POOL_SIZE 
+    Parameters p = {
+        .useSeed = false,
+        .useGenePool = false
     };
+    for (int i = 1; i < argc; ++i) {
+        if (isParam(argv[i], "-s", "--seed") && i + 1 < argc) {
+            p.useSeed = true;
+            p.seed = (unsigned int)atoi(argv[++i]);
+        }
+        if (isParam(argv[i], "-c", "--creatures") && i + 1 < argc) {
+            p.initialCreaturesCount = (unsigned int)atoi(argv[++i]);
+        }
+        if (isParam(argv[i], "-g", "--genepool")) {
+            p.useGenePool = true;
+        }
+        if (isParam(argv[i], "-p", "--poolsize") && i + 1 < argc) {
+            p.genePoolSize = (unsigned int)atoi(argv[++i]);
+        }
+    }   
+    return p;
 }
 
 
@@ -663,6 +682,8 @@ int main(int argc, char** argv) {
         return 0;
     }
     Parameters params = parseParameters(argc, argv);
+
+    srand(params.useSeed ? params.seed : (unsigned int)time(NULL)); // Seed the random number generator
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
