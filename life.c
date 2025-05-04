@@ -106,6 +106,7 @@ typedef struct {
     } screen;
     struct {
         PointF position; // Always reffers to the center of the screen.
+        bool dragging;
     } camera;
     struct {
         PointI bottomLeft;
@@ -117,6 +118,7 @@ typedef struct {
 World* world;
 Game* game;
 GameView* view;
+PointI lastMousePosition;
 
 Tick creatureAge(Creature* creature) {
     return creature->alive ? game->tick - creature->birthTick : creature->deathTick - creature->birthTick;
@@ -635,11 +637,19 @@ void selectCreature(int x, int y) {
 }
 
 void handleMouseClick(int button, int state, int x, int y) {
-    if (state == GLUT_DOWN) { // Check if the mouse button was pressed
-        if (button == GLUT_LEFT_BUTTON) {
-            selectCreature(x, y);
-        }
-    }
+    switch (state) {
+        case GLUT_DOWN:
+            if (button == GLUT_LEFT_BUTTON) {
+                view->camera.dragging = true;
+                lastMousePosition.x = x;
+                lastMousePosition.y = y;
+                selectCreature(x, y);
+            }
+            break;
+        case GLUT_UP:
+            view->camera.dragging = false;
+            break;
+    }    
 }
 
 void handleMouseWheel(int wheel, int direction, int x, int y) {
@@ -647,6 +657,17 @@ void handleMouseWheel(int wheel, int direction, int x, int y) {
         zoomIn();
     } else {
         zoomOut();
+    }
+}
+
+void handleMouseMotion(int x, int y) {
+    if (view->camera.dragging) {
+        // Convert pixel delta to world delta
+        float dx = (lastMousePosition.x - x) / CREATURE_SIZE.width;
+        float dy = (y - lastMousePosition.y) / CREATURE_SIZE.height;
+        moveCamera(dx, dy);
+        lastMousePosition.x = x;
+        lastMousePosition.y = y;
     }
 }
 
@@ -765,7 +786,8 @@ int main(int argc, char** argv) {
             .position = (PointF) {
                 .x = world->size.width / 2.0f,
                 .y = world->size.height / 2.0f
-            }
+            },
+            .dragging = false
         },
         .zoom = 1.0f
     };
@@ -784,6 +806,7 @@ int main(int argc, char** argv) {
     glutSpecialFunc(handleSpecialKeys);
     glutMouseFunc(handleMouseClick); // Register the mouse callback
     glutMouseWheelFunc(handleMouseWheel); // Register the mouse wheel callback
+    glutMotionFunc(handleMouseMotion); // Register the mouse motion callback
     scheduleUpdate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
