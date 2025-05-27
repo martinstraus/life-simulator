@@ -113,6 +113,7 @@ typedef struct {
         SizeI size;
     } visibleWorld; 
     float zoom; // Zoom factor
+    PointI mousePosition;
 } GameView;
 
 World* world;
@@ -260,9 +261,9 @@ void display() {
     if (game->displayInformation) {
         char information[100];
         if (game->selection != NULL) {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Creature: (age %d energy: %d generation: %d)", game->tick, game->updateInterval, world->alivec, world->mutations, creatureAge(game->selection), game->selection->energy, game->selection->generation);
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Mouse: (x=%d, y=%d) Creature: (age %d energy: %d generation: %d)", game->tick, game->updateInterval, world->alivec, world->mutations, view->mousePosition.x, view->mousePosition.y, creatureAge(game->selection), game->selection->energy, game->selection->generation); 
         } else {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d", game->tick, game->updateInterval, world->alivec, world->mutations);
+            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Mouse: (x=%d, y=%d)", game->tick, game->updateInterval, world->alivec, world->mutations, view->mousePosition.x, view->mousePosition.y);
         }
         displayText(information, GLUT_BITMAP_HELVETICA_12, 1.0f, 1.0f);
     }
@@ -618,12 +619,21 @@ void handleSpecialKeys(int key, int x, int y) {
 }
 
 PointI screenToWorld(int x, int y) {
-    // Invert the y-coordinate to match OpenGL's coordinate system
-    int invertedY = world->size.height * CREATURE_SIZE.height - y;
+    // Invert y to match OpenGL coordinates
+    int invertedY = view->screen.size.height - y;
 
+    // Calculate visible world size in world units
+    float visibleWorldWidth = view->screen.size.width / view->zoom;
+    float visibleWorldHeight = view->screen.size.height / view->zoom;
+
+    // Calculate the world coordinates of the bottom-left corner of the screen
+    float worldOriginX = view->camera.position.x - visibleWorldWidth / 2.0f;
+    float worldOriginY = view->camera.position.y - visibleWorldHeight / 2.0f;
+
+    // Map screen coordinates to world coordinates, accounting for zoom and camera
     PointI point;
-    point.x = x / CREATURE_SIZE.width;
-    point.y = invertedY / CREATURE_SIZE.height;
+    point.x = (int)(worldOriginX + x / view->zoom);
+    point.y = (int)(worldOriginY + invertedY / view->zoom);
     return point;
 }
 
@@ -661,6 +671,8 @@ void handleMouseWheel(int wheel, int direction, int x, int y) {
 }
 
 void handleMouseMotion(int x, int y) {
+    view->mousePosition.x = x;
+    view->mousePosition.y = y;
     if (view->camera.dragging) {
         // Convert pixel delta to world delta
         float dx = (lastMousePosition.x - x) / CREATURE_SIZE.width;
@@ -669,6 +681,10 @@ void handleMouseMotion(int x, int y) {
         lastMousePosition.x = x;
         lastMousePosition.y = y;
     }
+}
+
+void handlePassiveMouseMotion(int x, int y) {
+    view->mousePosition = screenToWorld(x, y); // Update the mouse position in world coordinates
 }
 
 void usage() {
@@ -807,6 +823,7 @@ int main(int argc, char** argv) {
     glutMouseFunc(handleMouseClick); // Register the mouse callback
     glutMouseWheelFunc(handleMouseWheel); // Register the mouse wheel callback
     glutMotionFunc(handleMouseMotion); // Register the mouse motion callback
+    glutPassiveMotionFunc(handlePassiveMouseMotion);
     scheduleUpdate();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
