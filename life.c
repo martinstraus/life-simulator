@@ -552,6 +552,21 @@ void reshape(int width, int height) {
 void moveCamera(int dx, int dy) {
     view->camera.position.x += dx;
     view->camera.position.y += dy;
+
+    // Calculate half of the visible area in world units
+    float halfWidth = (view->screen.size.width / view->zoom) / 2.0f;
+    float halfHeight = (view->screen.size.height / view->zoom) / 2.0f;
+
+    // Clamp camera position so the visible area stays within the world
+    if (view->camera.position.x - halfWidth < 0)
+        view->camera.position.x = halfWidth;
+    if (view->camera.position.x + halfWidth > world->size.width)
+        view->camera.position.x = world->size.width - halfWidth;
+    if (view->camera.position.y - halfHeight < 0)
+        view->camera.position.y = halfHeight;
+    if (view->camera.position.y + halfHeight > world->size.height)
+        view->camera.position.y = world->size.height - halfHeight;
+
     updateCoordinates(view);
     scheduleUpdate();
 }
