@@ -250,9 +250,16 @@ void display() {
         return;
     }
 
+    float left = view->camera.position.x - (view->screen.size.width / view->zoom) / 2.0f;
+    float right = view->camera.position.x + (view->screen.size.width / view->zoom) / 2.0f;
+    float bottom = view->camera.position.y - (view->screen.size.height / view->zoom) / 2.0f;
+    float top = view->camera.position.y + (view->screen.size.height / view->zoom) / 2.0f;
+
     for (int i = 0; i < world->creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
-        if (creature->alive) {
+        if (creature->alive &&
+            creature->location.x >= left && creature->location.x < right &&
+            creature->location.y >= bottom && creature->location.y < top) {
             renderCreature(creature);
         }
     }
