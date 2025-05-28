@@ -4,7 +4,6 @@
 #include <GL/freeglut.h>
 #include <primitives.h>
 
-#define CREATURE_SIZE (SizeI) { .width = 5, .height = 5 }
 typedef uint32_t Genome;
 typedef uint32_t Energy;
 
@@ -524,21 +523,21 @@ void update(int value) {
 }
 
 void updateCoordinates(GameView* view) {
-    glViewport(0, 0, view->screen.size.width, view->screen.size.height); // Set the viewport to the window size
+    glViewport(0, 0, view->screen.size.width, view->screen.size.height);
 
-    float worldWidth = (view->screen.size.width / CREATURE_SIZE.width) * view->zoom; // how many creatures fit in the width of the screen.
-    float worldHeight = (view->screen.size.height / CREATURE_SIZE.height) * view->zoom; // how many creatures fit in the height of the screen.
+    float worldWidth = view->screen.size.width / view->zoom;
+    float worldHeight = view->screen.size.height / view->zoom;
     float halfWidth = worldWidth / 2.0f;
     float halfHeight = worldHeight / 2.0f;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(
-        view->camera.position.x - halfWidth, 
-        view->camera.position.x + halfWidth, 
-        view->camera.position.y - halfHeight, 
-        view->camera.position.y + halfHeight, 
-        -1, 
+        view->camera.position.x - halfWidth,
+        view->camera.position.x + halfWidth,
+        view->camera.position.y - halfHeight,
+        view->camera.position.y + halfHeight,
+        -1,
         1
     );
     glMatrixMode(GL_MODELVIEW);
@@ -674,10 +673,9 @@ void handleMouseMotion(int x, int y) {
     view->mousePosition.x = x;
     view->mousePosition.y = y;
     if (view->camera.dragging) {
-        // Convert pixel delta to world delta
-        float dx = (lastMousePosition.x - x) / CREATURE_SIZE.width;
-        float dy = (y - lastMousePosition.y) / CREATURE_SIZE.height;
-        moveCamera(dx, dy);
+        float dx = lastMousePosition.x - x;
+        float dy = y - lastMousePosition.y;
+        moveCamera(dx / view->zoom, dy / view->zoom);
         lastMousePosition.x = x;
         lastMousePosition.y = y;
     }
@@ -766,9 +764,7 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
     SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
-    SizeI worldSize = params.useWorldSize
-        ? params.worldSize
-        : (SizeI) { .width = screenSize.width / CREATURE_SIZE.width, .height = screenSize.height / CREATURE_SIZE.height };
+    SizeI worldSize = params.useWorldSize ? params.worldSize : screenSize;
         
     game = &(Game) { 
         .tick = 0,
@@ -807,6 +803,11 @@ int main(int argc, char** argv) {
         },
         .zoom = 1.0f
     };
+    
+    // Set zoom so the visible area matches the world size
+    float zoomX = view->screen.size.width / world->size.width;
+    float zoomY = view->screen.size.height / world->size.height;
+    view->zoom = zoomX < zoomY ? zoomX : zoomY;
 
     initGenePool(game);
     initWorld(game, world);
