@@ -557,7 +557,14 @@ void moveCamera(int dx, int dy) {
 }
 
 void zoomCamera(float zoomFactor) {
+    float minZoomX = view->screen.size.width / world->size.width;
+    float minZoomY = view->screen.size.height / world->size.height;
+    float minZoom = (minZoomX < minZoomY) ? minZoomX : minZoomY;
+
     view->zoom *= zoomFactor;
+    if (view->zoom < minZoom) {
+        view->zoom = minZoom;
+    }
     updateCoordinates(view);
     scheduleUpdate();
 }
@@ -805,9 +812,10 @@ int main(int argc, char** argv) {
     };
     
     // Set zoom so the visible area matches the world size
-    float zoomX = view->screen.size.width / world->size.width;
-    float zoomY = view->screen.size.height / world->size.height;
-    view->zoom = zoomX < zoomY ? zoomX : zoomY;
+    float minZoomX = view->screen.size.width / world->size.width;
+    float minZoomY = view->screen.size.height / world->size.height;
+    float minZoom = (minZoomX < minZoomY) ? minZoomX : minZoomY;
+    view->zoom = minZoom;
 
     initGenePool(game);
     initWorld(game, world);
