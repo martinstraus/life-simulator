@@ -58,7 +58,7 @@ typedef struct {
 
 typedef struct {
     SizeI size;
-    Cell** cells; // 2D array of cells; convention: cells[x][y]
+    Cell* cells; // 2D array of cells, in 1 dimension for performance; convention: cells[y*width+x]
     Creature* creatures;
     unsigned int creaturesc;
     unsigned int maxPopulation;
@@ -72,7 +72,7 @@ typedef struct {
     unsigned int size;
 } GenePool;
 
-Cell** buffer; // Buffer for cells
+Cell* buffer; // Buffer for cells
 
 typedef struct {
     bool useSeed;
@@ -125,18 +125,18 @@ Tick creatureAge(Creature* creature) {
 }
 
 void initCells(Game* game, World* world) {
-    world->cells = (Cell**)malloc(world->size.width * sizeof(Cell*));
-    buffer = (Cell**)malloc(world->size.width * sizeof(Cell*));
-    for (unsigned int i = 0; i < world->size.width; ++i) {
-        world->cells[i] = (Cell*)malloc(world->size.height * sizeof(Cell));
-        for (unsigned int j = 0; j < world->size.height; ++j) {
-            world->cells[i][j].creature = NULL;
+    world->cells = malloc(world->size.width * world->size.height * sizeof(Cell));
+    buffer = malloc(world->size.width * world->size.height * sizeof(Cell));
+    for (unsigned int x = 0; x < world->size.width; ++x) {
+        for (unsigned int y = 0; y < world->size.height; ++y) {
+            Cell* cell = &world->cells[y * world->size.width + x];
+            cell->creature = NULL;
 
             // Randomly assign food to cell
             if ((float)rand() / RAND_MAX < CELL_FOOD_PROBABILITY) {
-                world->cells[i][j].food = (Energy)(rand() % CELL_FOOD_MAX);
+                cell->food = (Energy)(rand() % CELL_FOOD_MAX);
             } else {
-                world->cells[i][j].food = 0;
+                cell->food = 0;
             }
         }
     }
@@ -147,7 +147,7 @@ PointI randomUnoccupiedCell(World* world) {
     do {
         point.x = rand() % world->size.width;
         point.y = rand() % world->size.height;
-    } while (world->cells[point.x][point.y].creature != NULL);
+    } while (world->cells[point.y * world->size.width + point.x].creature != NULL);
     return point;
 }
 
@@ -166,6 +166,10 @@ Genome selectGenome(Game* game) {
 
 void initCreatures(Game* game, World* world) {
     world->creatures = (Creature*)malloc(world->maxPopulation * sizeof(Creature));
+    if (!world->creatures) {
+        fprintf(stderr, "Failed to allocate memory for creatures\n");
+        exit(EXIT_FAILURE);
+    }
     for (unsigned int i = 0; i < world->creaturesc; ++i) {
         PointI location = randomUnoccupiedCell(world);
         world->creatures[i].location.x = location.x;
@@ -174,7 +178,7 @@ void initCreatures(Game* game, World* world) {
         world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
         world->creatures[i].birthTick = game->tick;
         world->creatures[i].alive = true;
-        world->cells[location.x][location.y].creature = &world->creatures[i]; // Assign the creature to the cell
+        world->cells[location.y * world->size.width + location.x].creature = &world->creatures[i]; // Assign the creature to the cell
     }
     world->alivec = world->creaturesc;
 }
@@ -309,7 +313,7 @@ Tick reproductionAge(Creature* creature) {
 Action decideAction(World* world, Creature* creature) {
     bool isHungry = creature->energy < hungerThreshold(creature);
     if (isHungry) {
-        bool theresFoodInLocation = world->cells[creature->location.x][creature->location.y].food > 0;
+        bool theresFoodInLocation = world->cells[creature->location.y * world->size.width + creature->location.x].food > 0;
         if (theresFoodInLocation) return EAT;
     }
     Tick age = creatureAge(creature);
@@ -346,8 +350,8 @@ void move(World* world, Creature* creature) {
 
         // Check bounds
         if (newX >= 0 && newX < world->size.width && newY >= 0 && newY < world->size.height) {
-            Cell* oldCell = &world->cells[creature->location.x][creature->location.y];
-            Cell* newCell = &world->cells[newX][newY];
+            Cell* oldCell = &world->cells[creature->location.y + world->size.width + creature->location.x];
+            Cell* newCell = &world->cells[newY*world->size.width + newX];
 
             if (newCell->creature == NULL) { // Move only if the cell is unoccupied
                 newCell->creature = creature; // Move to the new cell
@@ -361,7 +365,7 @@ void move(World* world, Creature* creature) {
 }
 
 void eat(World* world, Creature* creature) {
-    Cell* cell = &world->cells[creature->location.x][creature->location.y];
+    Cell* cell = &world->cells[creature->location.y * world->size.width + creature->location.x];
     if (cell->food > 0) {
         int foodToEat = cell->food < FOOD_TO_EAT ? cell->food : FOOD_TO_EAT; // Cap the amount of food to eat
         foodToEat = creature->energy + foodToEat > ENERGY_MAX ? ENERGY_MAX - creature->energy : foodToEat; // Prevent eating more that possible
@@ -375,7 +379,7 @@ CellState cellState(World* world, int x, int y) {
     if (x < 0 || x >= world->size.width || y < 0 || y >= world->size.height) {
         return NOT_AVAILABLE; // Out of bounds
     }
-    Cell* cell = &world->cells[x][y];
+    Cell* cell = &world->cells[y * world->size.width + x];
     if (cell->creature != NULL) {
         return OCCUPIED; // Cell is occupied by a creature
     }
@@ -677,7 +681,7 @@ void selectCreature(int x, int y) {
     if (point.x < 0 || point.x >= world->size.width || point.y < 0 || point.y >= world->size.height) {
         return; // Out of bounds
     }
-    Cell* cell = &world->cells[point.x][point.y];
+    Cell* cell = &world->cells[point.y * world->size.width + point.x];
     game->selection = cell->creature != NULL ? cell->creature : NULL;
 }
 
