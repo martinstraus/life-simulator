@@ -265,11 +265,18 @@ void display() {
     }
 
     if (game->displayInformation) {
-        char information[100];
+        char information[256]; // Increased from 100 to 256
         if (game->selection != NULL) {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Mouse: (x=%d, y=%d) Creature: (age %d energy: %d generation: %d)", game->tick, game->updateInterval, world->alivec, world->mutations, view->mousePosition.x, view->mousePosition.y, creatureAge(game->selection), game->selection->energy, game->selection->generation); 
+            snprintf(information, sizeof(information),
+                "Tick: %d Interval: %dms Population: %d Mutations: %d Mouse: (x=%d, y=%d) Creature: (age %d energy: %d generation: %d)",
+                game->tick, game->updateInterval, world->alivec, world->mutations,
+                view->mousePosition.x, view->mousePosition.y,
+                creatureAge(game->selection), game->selection->energy, game->selection->generation);
         } else {
-            snprintf(information, sizeof(information), "Tick: %d Interval: %dms Population: %d Mutations: %d Mouse: (x=%d, y=%d)", game->tick, game->updateInterval, world->alivec, world->mutations, view->mousePosition.x, view->mousePosition.y);
+            snprintf(information, sizeof(information),
+                "Tick: %d Interval: %dms Population: %d Mutations: %d Mouse: (x=%d, y=%d)",
+                game->tick, game->updateInterval, world->alivec, world->mutations,
+                view->mousePosition.x, view->mousePosition.y);
         }
         displayText(information, GLUT_BITMAP_HELVETICA_12, 1.0f, 1.0f);
     }
@@ -767,7 +774,7 @@ Parameters parseParameters(int argc, char** argv) {
             p.worldSize.height = (unsigned int)atoi(argv[++i]);
         }
         if (isParam(argv[i], "-m", "--mutation") && i + 1 < argc) {
-            p.mutationProbability = (unsigned int)atof(argv[++i]);
+            p.mutationProbability = atof(argv[++i]);
         }
     }
     if ((p.worldSize.width != 0 && p.worldSize.height == 0) 
