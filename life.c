@@ -852,7 +852,6 @@ int main(int argc, char** argv) {
 
     initGenePool(game);
     initWorld(game, world);
-    game->running = true;
     
     glutInitWindowSize(screenSize.width, screenSize.height);
     glutCreateWindow("Life Simulator");
