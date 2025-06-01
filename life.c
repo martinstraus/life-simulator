@@ -72,8 +72,6 @@ typedef struct {
     unsigned int size;
 } GenePool;
 
-Cell* buffer; // Buffer for cells
-
 typedef struct {
     bool useSeed;
     int seed;
@@ -137,8 +135,6 @@ Tick creatureAge(Creature* creature) {
 void initCells(Game* game, World* world) {
     world->cells = malloc(world->size.width * world->size.height * sizeof(Cell));
     checkMemoryAllocation(world->cells, "Failed to allocate memory for cells.\n");
-    buffer = malloc(world->size.width * world->size.height * sizeof(Cell));
-    checkMemoryAllocation(buffer, "Failed to allocate memory for cell buffer.\n");
     for (unsigned int x = 0; x < world->size.width; ++x) {
         for (unsigned int y = 0; y < world->size.height; ++y) {
             Cell* cell = &world->cells[y * world->size.width + x];
@@ -807,9 +803,6 @@ Parameters parseParameters(int argc, char** argv) {
 void freeMemory() {
     if (world->cells) {
         free(world->cells);
-    }
-    if (buffer) {
-        free(buffer);
     }
     if (world->creatures) {
         free(world->creatures);
