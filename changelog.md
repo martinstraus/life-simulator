@@ -33,3 +33,7 @@
 - Remove duplicated log in changelog.
 - Added script for creating versions.
 
+## Version v1.12.0
+- Added control of initial creatures with density proportional to world size.
+- Zoom in and out positioning camera in mouse location.
+
