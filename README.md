@@ -58,15 +58,17 @@ Life simulator
 
 ### Parameters
 
-* '-h' or '--help': get command line help.
-* '-s' or '--seed': seed to use for randomization; the next parameter must be a positive integer number.
-* '-c' or '--creatures': initial creatures count; the next parameter must be a positive integer number.
-* '-g' or '--genepool': use a gene pool instead of random DNA generation for each creature.
-* '-p' or '--poolsize': the number of DNAs in the gene pool; the next parameter must be a positive integer number.
-* '-u' or '--update':  the update interval for animation; the next parameter must be a positive integer number.
-* '-w' or '--width': width of the world.
-* '-h' or '--height': height of the world.
-* '-m' or '--mutation': the probability of mutation when reproducing.
+* `-h` or `--help`: Get command line help.
+* `-s` or `--seed`: Seed to use for randomization; the next parameter must be a positive integer.
+* `-c` or `--creatures`: Initial creatures count; the next parameter must be a positive integer.
+* `-g` or `--genepool`: Use a gene pool instead of random DNA generation for each creature.
+* `-p` or `--poolsize`: The number of DNAs in the gene pool; the next parameter must be a positive integer.
+* `-u` or `--update`: The update interval for animation; the next parameter must be a positive integer.
+* `-w` or `--width`: Width of the world.
+* `-h` or `--height`: Height of the world.
+* `-m` or `--mutation`: The probability of mutation when reproducing.
+* `-d` or `--density`: Initial creature density (as a float between 0 and 1); overrides `--creatures` if specified.
+
 
 ### Examples
 
