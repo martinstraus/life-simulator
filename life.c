@@ -3,6 +3,7 @@
 #include <time.h>
 #include <GL/freeglut.h>
 #include <primitives.h>
+#include <sys/time.h>
 
 typedef uint32_t Genome;
 typedef uint32_t Energy;
@@ -22,7 +23,11 @@ typedef uint32_t Energy;
 #define MUTATION_PROBABILITY 0.01f
 #define GENE_POOL_SIZE 3
 #define USE_GENE_POOL true
+
 #define UPDATE_INTERVAL 100
+#define MAX_FPS 60
+#define FRAME_TIME_MS (1000.0 / MAX_FPS)
+
 //#define DEBUG_ENABLED
 //#define TRACE_ENABLED
 
@@ -95,6 +100,7 @@ typedef struct {
     bool useGenePool;
     GenePool genePool;
     float mutationProbability;
+    double lastFrameTime;       // Used for limiting frame-rate.
 } Game;
 
 typedef struct {
@@ -820,8 +826,19 @@ static inline bool safe_size_t_mul(size_t a, size_t b, uintmax_t* result) {
     return true;
 }
 
+double getTimeMs() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (double)tv.tv_sec * 1000.0 + (double)tv.tv_usec / 1000.0;
+}
+
 void idleFunc() {
-    glutPostRedisplay(); // Request display update
+    double now = getTimeMs();
+    // This is how we limit the frame rate to FRAME_RATE FPS.
+    if (now - game->lastFrameTime >= FRAME_TIME_MS) {
+        game->lastFrameTime = now;
+        glutPostRedisplay();
+    }
 }
 
 int main(int argc, char** argv) {
@@ -849,7 +866,8 @@ int main(int argc, char** argv) {
         .selection = NULL,
         .useGenePool = params.useGenePool,
         .genePool = (GenePool) { .genomes = NULL, .size = params.genePoolSize },
-        .mutationProbability = params.mutationProbability
+        .mutationProbability = params.mutationProbability,
+        .lastFrameTime = getTimeMs()
     };
 
     uintmax_t maxPopulation;
