@@ -15,7 +15,7 @@ typedef uint32_t Energy;
 #define ENERGY_COST_EAT 2
 #define ENERGY_COST_MOVE 10
 #define ENERGY_COST_REPRODUCE 5
-#define REPRODUCTION_ENERGY_TRHESHOLD 1000
+#define REPRODUCTION_ENERGY_THRESHOLD 1000
 #define INITIAL_CREATURES_COUNT 1000
 #define FOOD_TO_EAT ENERGY_COST_EAT * 3 // It pays 3x the effort to eat
 #define SPEED_DELTA 10
@@ -331,7 +331,7 @@ Action decideAction(World* world, Creature* creature) {
         if (theresFoodInLocation) return EAT;
     }
     Tick age = creatureAge(creature);
-    if (age > reproductionAge(creature) && creature->energy >= REPRODUCTION_ENERGY_TRHESHOLD) {
+    if (age > reproductionAge(creature) && creature->energy >= REPRODUCTION_ENERGY_THRESHOLD) {
         float reproduce = probabilityReproduce(creature);
         float r = (float)rand() / RAND_MAX;
         if (r < reproduce) {
