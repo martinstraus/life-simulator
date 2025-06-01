@@ -826,6 +826,10 @@ static inline bool safe_size_t_mul(size_t a, size_t b, uintmax_t* result) {
     return true;
 }
 
+void idleFunc() {
+    glutPostRedisplay(); // Request display update
+}
+
 int main(int argc, char** argv) {
     if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
         usage();
@@ -898,6 +902,7 @@ int main(int argc, char** argv) {
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
+    glutIdleFunc(idleFunc); // Register the idle callback
 
     glutKeyboardFunc(handleKeypress); // Register the keyboard callback
     glutSpecialFunc(handleSpecialKeys);
