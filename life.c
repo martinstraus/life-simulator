@@ -931,7 +931,15 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
-    SizeI screenSize = (SizeI) { .width = 1200, .height = 600 };
+
+    int window = glutCreateWindow("Life Simulator");
+    glutSetWindow(window);
+    glutFullScreenToggle();
+    SizeI screenSize = (SizeI) { 
+        .width = glutGet(GLUT_SCREEN_WIDTH), 
+        .height = glutGet(GLUT_SCREEN_HEIGHT) 
+    };
+
     SizeI worldSize = params.useWorldSize ? params.worldSize : screenSize;
         
     game = &(Game) { 
@@ -993,8 +1001,6 @@ int main(int argc, char** argv) {
     initGenePool(game);
     initWorld(game, world);
     
-    glutInitWindowSize(screenSize.width, screenSize.height);
-    glutCreateWindow("Life Simulator");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
