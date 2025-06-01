@@ -87,6 +87,7 @@ typedef struct {
     bool useWorldSize;
     SizeI worldSize;
     float mutationProbability;
+    float populationDensity; // How many creatures per cell
 } Parameters;
 
 typedef struct {
@@ -819,9 +820,10 @@ void usage() {
     printf("\t'-g' or '--genepool': use a gene pool instead of random DNA generation for each creature.\n");
     printf("\t'-p' or '--poolsize': the number of DNAs in the gene pool; the next parameter must be a positive integer number. Default: %d.\n", GENE_POOL_SIZE);
     printf("\t'-u' or '--update': the update interval for animation; the next parameter must be a positive integer number. Default: %d.\n", UPDATE_INTERVAL);
-    printf("\t'-w' or '--width': width of the world.");
-    printf("\t'-h' or '--height': height of the world.");
-    printf("\t'-m' or '--mutation': probability of mutation when reproducing.");
+    printf("\t'-w' or '--width': width of the world.\n");
+    printf("\t'-h' or '--height': height of the world.\n");
+    printf("\t'-m' or '--mutation': probability of mutation when reproducing.\n");
+    printf("\t'-d' or '--density': initial creature density (0.0 to 1.0, default: 0.05).\n");
 }
 
 bool isParam(char* value, const char* shortParam, const char* longParam) {
@@ -836,7 +838,8 @@ Parameters parseParameters(int argc, char** argv) {
         .updateInterval = UPDATE_INTERVAL,
         .useWorldSize = false,
         .worldSize = { .width = 0, .height = 0 },
-        .mutationProbability = MUTATION_PROBABILITY
+        .mutationProbability = MUTATION_PROBABILITY,
+        .populationDensity = 0.05f
     };
     for (int i = 1; i < argc; ++i) {
         if (isParam(argv[i], "-s", "--seed") && i + 1 < argc) {
@@ -865,6 +868,11 @@ Parameters parseParameters(int argc, char** argv) {
         }
         if (isParam(argv[i], "-m", "--mutation") && i + 1 < argc) {
             p.mutationProbability = atof(argv[++i]);
+        }
+        if (isParam(argv[i], "-d", "--density") && i + 1 < argc) {
+            p.populationDensity = atof(argv[++i]);
+            if (p.populationDensity < 0.0f) p.populationDensity = 0.05f;
+            if (p.populationDensity > 1.0f) p.populationDensity = 1.0f;
         }
     }
     if ((p.worldSize.width != 0 && p.worldSize.height == 0) 
@@ -946,10 +954,16 @@ int main(int argc, char** argv) {
         freeMemory();
         exit(EXIT_FAILURE);
     }
+    unsigned int initialCreaturesCount = params.initialCreaturesCount;
+    if (initialCreaturesCount == INITIAL_CREATURES_COUNT) { // Only override if not set by -c
+        initialCreaturesCount = (unsigned int)(params.populationDensity * maxPopulation);
+        if (initialCreaturesCount < 1) initialCreaturesCount = 1;
+        if (initialCreaturesCount > maxPopulation) initialCreaturesCount = maxPopulation;
+    }
     world = &(World) { 
         .size = worldSize,
         .maxPopulation = maxPopulation,
-        .creaturesc = params.initialCreaturesCount <= maxPopulation ? params.initialCreaturesCount : maxPopulation
+        .creaturesc = initialCreaturesCount
     };
 
     // The camera is initialized to the center of the world.
