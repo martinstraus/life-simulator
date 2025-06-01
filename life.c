@@ -120,13 +120,22 @@ Game* game;
 GameView* view;
 PointI lastMousePosition;
 
+void checkMemoryAllocation(void* ptr, const char* message) {
+    if (!ptr) {
+        fprintf(stderr, "%s", message);
+        exit(EXIT_FAILURE);
+    }
+}
+
 Tick creatureAge(Creature* creature) {
     return creature->alive ? game->tick - creature->birthTick : creature->deathTick - creature->birthTick;
 }
 
 void initCells(Game* game, World* world) {
     world->cells = malloc(world->size.width * world->size.height * sizeof(Cell));
+    checkMemoryAllocation(world->cells, "Failed to allocate memory for cells.\n");
     buffer = malloc(world->size.width * world->size.height * sizeof(Cell));
+    checkMemoryAllocation(buffer, "Failed to allocate memory for cell buffer.\n");
     for (unsigned int x = 0; x < world->size.width; ++x) {
         for (unsigned int y = 0; y < world->size.height; ++y) {
             Cell* cell = &world->cells[y * world->size.width + x];
@@ -166,6 +175,7 @@ Genome selectGenome(Game* game) {
 
 void initCreatures(Game* game, World* world) {
     world->creatures = (Creature*)malloc(world->maxPopulation * sizeof(Creature));
+    checkMemoryAllocation(world->creatures, "Failed to allocate memory for creatures.\n");
     if (!world->creatures) {
         fprintf(stderr, "Failed to allocate memory for creatures\n");
         exit(EXIT_FAILURE);
@@ -186,6 +196,7 @@ void initCreatures(Game* game, World* world) {
 void initGenePool(Game *game) {
     if (game->useGenePool) {
         game->genePool.genomes = (Genome*)malloc(game->genePool.size * sizeof(Genome));
+        checkMemoryAllocation(game->genePool.genomes, "Failed to allocate memory for gene pool.\n");
         for (int i = 0; i < game->genePool.size; ++i) {
             game->genePool.genomes[i] = randomGenome();
         }
