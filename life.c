@@ -397,12 +397,19 @@ void move(World* world, Creature* creature) {
     }
 }
 
+Energy safeAddEnergy(Energy current, Energy add) {
+    if (current > ENERGY_MAX - add)
+        return ENERGY_MAX;
+    else
+        return current + add;
+}
+
 void eat(World* world, Creature* creature) {
     Cell* cell = &world->cells[creature->location.y * world->size.width + creature->location.x];
     if (cell->food > 0) {
         int foodToEat = cell->food < FOOD_TO_EAT ? cell->food : FOOD_TO_EAT; // Cap the amount of food to eat
         foodToEat = creature->energy + foodToEat > ENERGY_MAX ? ENERGY_MAX - creature->energy : foodToEat; // Prevent eating more that possible
-        creature->energy += foodToEat; // Increase energy
+        creature->energy = safeAddEnergy(creature->energy, foodToEat);
         cell->food -= foodToEat; // Decrease food in the cell
     }
     decreaseEnergy(creature, ENERGY_COST_EAT); // Decrease energy for eating
