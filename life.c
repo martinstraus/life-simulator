@@ -507,40 +507,38 @@ void reproduce(World* world, Creature* creature) {
 }
 
 void updateCreature(Creature* creature) {
-    if (creature->alive) {
-        Action action = decideAction(world, creature);
-        switch (action) {
-            case NONE:
-                none(world, creature);
-                break;
-            case MOVE:
-                move(world, creature);
-                break;
-            case EAT:
-                eat(world, creature);
-                break;
-            case REPRODUCE:
-                reproduce(world, creature);
-                break;
-            default:
-                break;
+    Action action = decideAction(world, creature);
+    switch (action) {
+        case NONE:
+            none(world, creature);
+            break;
+        case MOVE:
+            move(world, creature);
+            break;
+        case EAT:
+            eat(world, creature);
+            break;
+        case REPRODUCE:
+            reproduce(world, creature);
+            break;
+        default:
+            break;
+    }
+    
+    #ifdef DEBUG_ENABLED
+        printf("Creature %d action=%d energy=%d\n", creature->genome, action , creature->energy);
+    #endif
+    
+    if (creature->energy <= 0) {
+        creature->alive = false; // Mark as dead if energy is depleted
+        creature->deathTick = game->tick; // Store the tick when the creature died
+        world->alivec--;
+        if (game->selection == creature) {
+            game->selection = NULL; // Deselect the creature if it dies
         }
-        
-        #ifdef DEBUG_ENABLED
-            printf("Creature %d action=%d energy=%d\n", creature->genome, action , creature->energy);
+        #ifdef TRACE_ENABLED
+            printf("Creature %d died at tick %d\n", creature->genome, game->tick);
         #endif
-        
-        if (creature->energy <= 0) {
-            creature->alive = false; // Mark as dead if energy is depleted
-            creature->deathTick = game->tick; // Store the tick when the creature died
-            world->alivec--;
-            if (game->selection == creature) {
-                game->selection = NULL; // Deselect the creature if it dies
-            }
-            #ifdef TRACE_ENABLED
-                printf("Creature %d died at tick %d\n", creature->genome, game->tick);
-            #endif
-        }
     }
 }
 
@@ -553,6 +551,28 @@ void scheduleUpdate() {
     }
     game->timerScheduled = true;
     glutTimerFunc(game->updateInterval, update, 0);
+}
+
+void compact(World* world) {
+    #ifdef TRACE_ENABLED
+        printf("Creatures before compacting: %d\n", world->creaturesc);
+    #endif
+
+    // Compact the creatures array by removing dead creatures
+    unsigned int j = 0;
+    for (unsigned int i = 0; i < world->creaturesc; ++i) {
+        if (world->creatures[i].alive) {
+            if (i != j) {
+                world->creatures[j] = world->creatures[i]; // Move alive creature to the front
+            }
+            j++;
+        }
+    }
+    world->creaturesc = j; // Update the count of creatures
+
+    #ifdef TRACE_ENABLED
+        printf("Creatures before compacting: %d\n", world->creaturesc);
+    #endif
 }
 
 // Update game state here
@@ -568,8 +588,15 @@ void update(int value) {
         #endif
 
         for (int i = 0; i < world->creaturesc; ++i) {
-            updateCreature(&world->creatures[i]);
+            Creature* creature = &world->creatures[i];
+            if (creature->alive) {
+                updateCreature(creature);
+            }
         }
+
+
+        compact(world);
+        
 
         if (world->alivec == 0) {
             game->ended = true;
