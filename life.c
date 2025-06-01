@@ -179,10 +179,6 @@ Genome selectGenome(Game* game) {
 void initCreatures(Game* game, World* world) {
     world->creatures = (Creature*)malloc(world->maxPopulation * sizeof(Creature));
     checkMemoryAllocation(world->creatures, "Failed to allocate memory for creatures.\n");
-    if (!world->creatures) {
-        fprintf(stderr, "Failed to allocate memory for creatures\n");
-        exit(EXIT_FAILURE);
-    }
     for (unsigned int i = 0; i < world->creaturesc; ++i) {
         PointI location = randomUnoccupiedCell(world);
         world->creatures[i].location.x = location.x;
