@@ -435,7 +435,7 @@ void reproduce(World* world, Creature* creature) {
     };
 
     int freeCount = 0;
-    PointI selected[0];
+    PointI selected[9];
     for (int i = 0; i < 9; ++i) {
         if (surroundingLocations[i].state == FREE) {
             selected[freeCount++] = surroundingLocations[i].location;
