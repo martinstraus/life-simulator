@@ -154,17 +154,16 @@ void initCells(Game* game, World* world) {
     }
 }
 
-PointI randomUnoccupiedCell(World* world) {
-    PointI point;
-    int attempts = 0;
-    bool cellOccupied = false;
-    do {
-        point.x = rand() % world->size.width;
-        point.y = rand() % world->size.height;
-        attempts++;
-        cellOccupied = world->cells[point.y * world->size.width + point.x].creature != NULL;
-    } while (cellOccupied && attempts < 10);
-    return point;
+bool randomUnoccupiedCell(World* world, PointI* out) {
+    for (int attempts = 0; attempts < 100; ++attempts) {
+        int x = rand() % world->size.width;
+        int y = rand() % world->size.height;
+        if (!world->cells[y * world->size.width + x].creature) {
+            out->x = x; out->y = y;
+            return true;
+        }
+    }
+    return false;
 }
 
 Genome randomGenome() {
@@ -184,14 +183,16 @@ void initCreatures(Game* game, World* world) {
     world->creatures = (Creature*)malloc(world->maxPopulation * sizeof(Creature));
     checkMemoryAllocation(world->creatures, "Failed to allocate memory for creatures.\n");
     for (unsigned int i = 0; i < world->creaturesc; ++i) {
-        PointI location = randomUnoccupiedCell(world);
-        world->creatures[i].location.x = location.x;
-        world->creatures[i].location.y = location.y;
-        world->creatures[i].genome = selectGenome(game);
-        world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
-        world->creatures[i].birthTick = game->tick;
-        world->creatures[i].alive = true;
-        world->cells[location.y * world->size.width + location.x].creature = &world->creatures[i]; // Assign the creature to the cell
+        PointI location;
+        if (randomUnoccupiedCell(world, &location)) {
+            world->creatures[i].location.x = location.x;
+            world->creatures[i].location.y = location.y;
+            world->creatures[i].genome = selectGenome(game);
+            world->creatures[i].energy = (ENERGY_BASE + rand()) % ENERGY_MAX;
+            world->creatures[i].birthTick = game->tick;
+            world->creatures[i].alive = true;
+            world->cells[location.y * world->size.width + location.x].creature = &world->creatures[i]; // Assign the creature to the cell
+        }
     }
     world->alivec = world->creaturesc;
 }
