@@ -61,7 +61,7 @@ typedef struct {
     Cell* cells; // 2D array of cells, in 1 dimension for performance; convention: cells[y*width+x]
     Creature* creatures;
     unsigned int creaturesc;
-    unsigned int maxPopulation;
+    uintmax_t maxPopulation;
     unsigned int alivec; // Number of alive creatures
     unsigned int reproductionc; // Number of reproductions
     unsigned int mutations;
@@ -819,6 +819,14 @@ void freeMemory() {
     }
 }
 
+static inline bool safe_size_t_mul(size_t a, size_t b, uintmax_t* result) {
+    if (b != 0 && a > SIZE_MAX / b) {
+        return false; // overflow would occur
+    }
+    *result = (uintmax_t)a * (uintmax_t)b;
+    return true;
+}
+
 int main(int argc, char** argv) {
     if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
         usage();
@@ -847,7 +855,12 @@ int main(int argc, char** argv) {
         .mutationProbability = params.mutationProbability
     };
 
-    unsigned int maxPopulation = worldSize.width * worldSize.height;
+    uintmax_t maxPopulation;
+    if (!safe_size_t_mul(worldSize.width, worldSize.height, &maxPopulation)) {
+        fprintf(stderr, "Error: world size is too large.\n");
+        freeMemory();
+        exit(EXIT_FAILURE);
+    }
     world = &(World) { 
         .size = worldSize,
         .maxPopulation = maxPopulation,
