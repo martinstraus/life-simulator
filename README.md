@@ -3,7 +3,50 @@ Life simulator
 
 ## How to play
 
-### Actions
+## Game Mechanics
+
+### Creatures
+
+- Each creature occupies a cell in the world grid and has its own **DNA (genome)**, energy, age, and generation number.
+- Creatures can perform actions each tick: **move**, **eat**, **reproduce**, or **do nothing**. The action is determined by their DNA and current state.
+
+### DNA (Genome)
+
+- The DNA is a 32-bit integer that encodes behavioral traits:
+    - **Probability to move**: Lower bits determine how likely a creature is to move.
+    - **Probability to reproduce**: Some bits control the chance to attempt reproduction.
+    - **Hunger threshold**: DNA encodes how much energy a creature needs before it tries to eat.
+    - **Reproduction age**: DNA determines at what age a creature can reproduce.
+- When a creature reproduces, its offspring inherit its DNA, with a chance of mutation (a random bit flip).
+
+### Energy and Food
+
+- Creatures consume energy each tick, with different actions costing different amounts.
+- **Eating**: If a creature is hungry and there is food in its cell, it will eat to regain energy.
+- **Moving**: Moving to a neighboring cell costs energy.
+- **Reproduction**: Reproducing splits the parent's energy among offspring and costs additional energy.
+- If a creature's energy drops to zero, it dies.
+
+### Reproduction
+
+- When conditions are met (sufficient age and energy, and a random chance based on DNA), a creature can reproduce.
+- Reproduction creates two offspring in nearby free cells, each inheriting the parent's DNA (with possible mutation).
+- The parent dies after reproduction.
+
+### Mutation
+
+- Each reproduction event has a configurable probability of mutation.
+- Mutation randomly flips one bit in the offspring's DNA, introducing new traits into the population.
+
+### Selection
+
+- You can select a creature by clicking on it. Information about the selected creature (age, energy, generation, etc.) is displayed if information mode is enabled.
+
+### Simulation End
+
+- The simulation ends when no creatures remain alive.
+
+## Controls
 
 - Pause the game: press 'p'.
 - Toggle information: press 'i'.
@@ -11,9 +54,9 @@ Life simulator
 - Slow down: press 's'.
 - Zoom in or out: press '+' or '-', or scroll the mouse wheel.
 
-### Run
+## Run
 
-#### Parameters
+### Parameters
 
 * '-h' or '--help': get command line help.
 * '-s' or '--seed': seed to use for randomization; the next parameter must be a positive integer number.
@@ -25,7 +68,7 @@ Life simulator
 * '-h' or '--height': height of the world.
 * '-m' or '--mutation': the probability of mutation when reproducing.
 
-#### Examples
+### Examples
 
 Run with default settings:
 
