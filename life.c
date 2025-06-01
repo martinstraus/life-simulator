@@ -720,8 +720,7 @@ void handleMouseWheel(int wheel, int direction, int x, int y) {
 }
 
 void handleMouseMotion(int x, int y) {
-    view->mousePosition.x = x;
-    view->mousePosition.y = y;
+    view->mousePosition = screenToWorld(x, y); // Update the mouse position in world coordinates
     if (view->camera.dragging) {
         float dx = lastMousePosition.x - x;
         float dy = y - lastMousePosition.y;
