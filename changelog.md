@@ -13,3 +13,23 @@
 - Left and right were inverted.
 - Added paramterer for probability of mutation.
 - The movement of the camera is proportional to the zoom.
+## Version v1.11.0
+- Compact the array of creatures after updating.
+- Check for integer overflow before increasing energy.
+- Add selection highlighting.
+- Limit frame-rate to 60fps.
+- Remove unused buffer.
+- Error checking for when we can't find an unocuppied cell.
+- Decouple redisplay from updating. More smoothness in animation.
+- Limit the number of attempts to find an unoccupied cell.
+- Mouse callbacks didn't handle coordinate transformation consistently.
+- Remove redundant NULL check.
+- Fixed typo in REPRODUCTION_ENERGY_THRESHOLD.
+- Calculation of maxPopulation could overflow.
+- Free memory when exiting.
+- Check for memory allocation.
+- reproduce() created selected as an array of 0; corruption!
+- move() was indexing cells wrong.
+- Remove duplicated log in changelog.
+- Added script for creating versions.
+
