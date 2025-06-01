@@ -221,6 +221,18 @@ void setColorForCreature(Creature* creature) {
     glColor3f(r, g, b);
 }
 
+void renderSelectionHighlight(Creature* creature) {
+    glColor3f(1.0f, 1.0f, 0.0f); // Yellow highlight
+    glLineWidth(3.0f);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(creature->location.x, creature->location.y);
+    glVertex2f(creature->location.x + 1, creature->location.y);
+    glVertex2f(creature->location.x + 1, creature->location.y + 1);
+    glVertex2f(creature->location.x, creature->location.y + 1);
+    glEnd();
+    glLineWidth(1.0f); // Reset to default
+}
+
 void renderCreature(Creature* creature) {
     setColorForCreature(creature);
     glBegin(GL_QUADS);
@@ -283,6 +295,10 @@ void display() {
             creature->location.y >= bottom && creature->location.y < top) {
             renderCreature(creature);
         }
+    }
+
+    if (game->selection && game->selection->alive) {
+        renderSelectionHighlight(game->selection);
     }
 
     if (game->displayInformation) {
