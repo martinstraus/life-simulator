@@ -1,3 +1,7 @@
+## Version v1.12.1
+- Add newest logs to the beginning of changelog.
+- Updated documentation.
+
 ## Version v1.12.0
 - Added control of initial creatures with density proportional to world size.
 - Zoom in and out positioning camera in mouse location.
