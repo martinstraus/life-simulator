@@ -120,9 +120,12 @@ Game* game;
 GameView* view;
 PointI lastMousePosition;
 
+void freeMemory();
+
 void checkMemoryAllocation(void* ptr, const char* message) {
     if (!ptr) {
         fprintf(stderr, "%s", message);
+        freeMemory();
         exit(EXIT_FAILURE);
     }
 }
@@ -801,6 +804,20 @@ Parameters parseParameters(int argc, char** argv) {
     return p;
 }
 
+void freeMemory() {
+    if (world->cells) {
+        free(world->cells);
+    }
+    if (buffer) {
+        free(buffer);
+    }
+    if (world->creatures) {
+        free(world->creatures);
+    }
+    if (game->useGenePool && game->genePool.genomes) {
+        free(game->genePool.genomes);
+    }
+}
 
 int main(int argc, char** argv) {
     if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
@@ -881,5 +898,8 @@ int main(int argc, char** argv) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color
 
     glutMainLoop();
+
+    freeMemory();
+    
     return 0;
 }
