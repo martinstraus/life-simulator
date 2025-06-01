@@ -350,7 +350,7 @@ void move(World* world, Creature* creature) {
 
         // Check bounds
         if (newX >= 0 && newX < world->size.width && newY >= 0 && newY < world->size.height) {
-            Cell* oldCell = &world->cells[creature->location.y + world->size.width + creature->location.x];
+            Cell* oldCell = &world->cells[creature->location.y * world->size.width + creature->location.x];
             Cell* newCell = &world->cells[newY*world->size.width + newX];
 
             if (newCell->creature == NULL) { // Move only if the cell is unoccupied
