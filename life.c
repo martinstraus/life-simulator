@@ -655,8 +655,30 @@ void moveCamera(int dx, int dy) {
     updateCoordinates(view);
     scheduleUpdate();
 }
+PointI screenToWorld(int x, int y) {
+    // Invert y to match OpenGL coordinates
+    int invertedY = view->screen.size.height - y;
 
-void zoomCamera(float zoomFactor) {
+    // Calculate visible world size in world units
+    float visibleWorldWidth = view->screen.size.width / view->zoom;
+    float visibleWorldHeight = view->screen.size.height / view->zoom;
+
+    // Calculate the world coordinates of the bottom-left corner of the screen
+    float worldOriginX = view->camera.position.x - visibleWorldWidth / 2.0f;
+    float worldOriginY = view->camera.position.y - visibleWorldHeight / 2.0f;
+
+    // Map screen coordinates to world coordinates, accounting for zoom and camera
+    PointI point;
+    point.x = (int)(worldOriginX + x / view->zoom);
+    point.y = (int)(worldOriginY + invertedY / view->zoom);
+    return point;
+}
+
+void zoomCameraAt(float zoomFactor, int mouseX, int mouseY) {
+    // 1. Get world coordinates under the mouse before zoom
+    PointI before = screenToWorld(mouseX, mouseY);
+
+    // 2. Apply zoom
     float minZoomX = view->screen.size.width / world->size.width;
     float minZoomY = view->screen.size.height / world->size.height;
     float minZoom = (minZoomX < minZoomY) ? minZoomX : minZoomY;
@@ -665,16 +687,31 @@ void zoomCamera(float zoomFactor) {
     if (view->zoom < minZoom) {
         view->zoom = minZoom;
     }
+
+    // 3. Get world coordinates under the mouse after zoom
+    PointI after = screenToWorld(mouseX, mouseY);
+
+    // 4. Adjust camera so the world point under the mouse stays the same
+    float dx = before.x - after.x;
+    float dy = before.y - after.y;
+    view->camera.position.x += dx;
+    view->camera.position.y += dy;
+
+    // Clamp camera position so the visible area stays within the world
+    float halfWidth = (view->screen.size.width / view->zoom) / 2.0f;
+    float halfHeight = (view->screen.size.height / view->zoom) / 2.0f;
+
+    if (view->camera.position.x - halfWidth < 0)
+        view->camera.position.x = halfWidth;
+    if (view->camera.position.x + halfWidth > world->size.width)
+        view->camera.position.x = world->size.width - halfWidth;
+    if (view->camera.position.y - halfHeight < 0)
+        view->camera.position.y = halfHeight;
+    if (view->camera.position.y + halfHeight > world->size.height)
+        view->camera.position.y = world->size.height - halfHeight;
+
     updateCoordinates(view);
     scheduleUpdate();
-}
-
-void zoomIn() {
-    zoomCamera(0.9f);
-}
-
-void zoomOut() {
-    zoomCamera(1.1f);
 }
 
 void handleKeypress(unsigned char key, int x, int y) {
@@ -699,10 +736,10 @@ void handleKeypress(unsigned char key, int x, int y) {
             scheduleUpdate();
             break;
         case '+':
-            zoomIn();
+            zoomCameraAt(0.9f, view->camera.position.x, view->camera.position.y);
             break;
         case '-':
-            zoomOut();
+            zoomCameraAt(1.1f, view->camera.position.x, view->camera.position.y);
             break;
     }
 }
@@ -722,25 +759,6 @@ void handleSpecialKeys(int key, int x, int y) {
             moveCamera(1.0f * view->zoom, 0.0f);
             break;
     }
-}
-
-PointI screenToWorld(int x, int y) {
-    // Invert y to match OpenGL coordinates
-    int invertedY = view->screen.size.height - y;
-
-    // Calculate visible world size in world units
-    float visibleWorldWidth = view->screen.size.width / view->zoom;
-    float visibleWorldHeight = view->screen.size.height / view->zoom;
-
-    // Calculate the world coordinates of the bottom-left corner of the screen
-    float worldOriginX = view->camera.position.x - visibleWorldWidth / 2.0f;
-    float worldOriginY = view->camera.position.y - visibleWorldHeight / 2.0f;
-
-    // Map screen coordinates to world coordinates, accounting for zoom and camera
-    PointI point;
-    point.x = (int)(worldOriginX + x / view->zoom);
-    point.y = (int)(worldOriginY + invertedY / view->zoom);
-    return point;
 }
 
 void selectCreature(int x, int y) {
@@ -770,9 +788,11 @@ void handleMouseClick(int button, int state, int x, int y) {
 
 void handleMouseWheel(int wheel, int direction, int x, int y) {
     if (direction > 0) {
-        zoomIn();
+        // Zoom in
+        zoomCameraAt(0.9f, x, y);
     } else {
-        zoomOut();
+        // Zoom 
+        zoomCameraAt(1.1f, x, y);
     }
 }
 
