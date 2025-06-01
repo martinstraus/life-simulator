@@ -156,10 +156,14 @@ void initCells(Game* game, World* world) {
 
 PointI randomUnoccupiedCell(World* world) {
     PointI point;
+    int attempts = 0;
+    bool cellOccupied = false;
     do {
         point.x = rand() % world->size.width;
         point.y = rand() % world->size.height;
-    } while (world->cells[point.y * world->size.width + point.x].creature != NULL);
+        attempts++;
+        cellOccupied = world->cells[point.y * world->size.width + point.x].creature != NULL;
+    } while (cellOccupied && attempts < 10);
     return point;
 }
 
