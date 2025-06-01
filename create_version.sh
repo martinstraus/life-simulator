@@ -1,5 +1,4 @@
 #!/bin/bash
-# filepath: /home/martinstraus/proyectos/life-simulator/create_version.sh
 
 # Usage: ./create_version.sh <version>
 
@@ -28,8 +27,11 @@ if [ -z "$LOG" ]; then
     exit 1
 fi
 
-# Add log to changelog
-echo -e "## Version $VERSION\n$LOG\n" >> "$CHANGELOG"
+# Add log to the beginning of changelog
+TMP_CHANGELOG=$(mktemp)
+echo -e "## Version $VERSION\n$LOG\n" > "$TMP_CHANGELOG"
+cat "$CHANGELOG" >> "$TMP_CHANGELOG" 2>/dev/null || true
+mv "$TMP_CHANGELOG" "$CHANGELOG"
 
 # Add and commit changelog
 git add "$CHANGELOG"
