@@ -57,6 +57,11 @@ typedef struct {
 } Creature;
 
 typedef struct {
+    PointI location;
+    Tick birthTick; // Tick when the creature was born
+} Fungus;
+
+typedef struct {
     Creature* creature; // Current ocuppying creature. Might be NULL.
     Energy food; // Food in the cell.
 } Cell;
@@ -70,6 +75,8 @@ typedef struct {
     unsigned int alivec; // Number of alive creatures
     unsigned int reproductionc; // Number of reproductions
     unsigned int mutations;
+    Fungus* fungus; // Array of fungus, if needed
+    unsigned int fungusc; // Number of fungus
 } World;
 
 typedef struct {
@@ -210,8 +217,26 @@ void initGenePool(Game *game) {
     }
 }
 
+void initFungus(Game* game, World* world) {
+    world->fungusc = 1; // Initialize with one fungus
+    world->fungus = (Fungus*)malloc(world->fungusc * sizeof(Fungus));
+    checkMemoryAllocation(world->fungus, "Failed to allocate memory for fungus.\n");
+    for (int i = 0; i < world->fungusc; ++i) {
+        PointI location;
+        if (randomUnoccupiedCell(world, &location)) {
+            world->fungus[i].location = location;
+            world->fungus[i].birthTick = game->tick; // Set the birth tick for the fungus
+        } else {
+            fprintf(stderr, "Failed to place fungus in the world.\n");
+            freeMemory();
+            exit(EXIT_FAILURE);
+        }
+    }   
+}
+
 void initWorld(Game* game, World* world) {
     initCells(game, world);
+    initFungus(game, world);
     initCreatures(game, world);
 }
 
@@ -289,6 +314,7 @@ void display() {
     float bottom = view->camera.position.y - (view->screen.size.height / view->zoom) / 2.0f;
     float top = view->camera.position.y + (view->screen.size.height / view->zoom) / 2.0f;
 
+    /*
     for (int i = 0; i < world->creaturesc; ++i) {
         Creature* creature = &world->creatures[i];
         if (creature->alive &&
@@ -297,6 +323,7 @@ void display() {
             renderCreature(creature);
         }
     }
+        */
 
     if (game->selection && game->selection->alive) {
         renderSelectionHighlight(game->selection);
@@ -587,7 +614,7 @@ void update(int value) {
         #ifdef TRACE_ENABLED
             printf("tick %d\n", game->tick);
         #endif
-
+/*
         for (int i = 0; i < world->creaturesc; ++i) {
             Creature* creature = &world->creatures[i];
             if (creature->alive) {
@@ -595,13 +622,13 @@ void update(int value) {
             }
         }
 
-
         compact(world);
         
 
         if (world->alivec == 0) {
             game->ended = true;
         }
+            */
     }
 
     glutPostRedisplay(); // Request display update
